@@ -42,7 +42,7 @@ class SoundPlayer:
 
 
 class Plotter:
-    def __init__(self, target_index=3, interval=1, width=200, pause=0.005,
+    def __init__(self, target_index=3, interval=1, width=400, pause=0.005,
                  sigma=(5, 7), xlabel=None, ylabel=None):
         # field length
         self.__fieldlength = 4
@@ -66,7 +66,7 @@ class Plotter:
         self.fig = plt.figure()
         self.fig.canvas.set_window_title('Acc')
         self.li, = plt.plot(self.t, self.values[self._target_index], label="Sensor")
-        self.li_sigma, = plt.plot([self.t[0], self.t[-1]], [0, 0])
+        self.li_sigma = plt.axhline(y=0)
 
         if xlabel is not None:
             plt.xlabel(xlabel)
@@ -87,39 +87,8 @@ class Plotter:
 
         return labels, values
 
-    def _store_values(self, values):
-        self.t[0:-1] = self.t[1:]
-        self.t[-1] = float(self.count)
-        self.count += 1
-
-        self.values[:, 0:-1] = self.values[:, 1:]
-        self.values[:, -1] = [float(v) for v in values]
-
-    def _check_warning(self, diff, std):
-        if time.time() - self.last_ring > 2:
-            if diff[-1] > self.sigma[1] * std:
-                # over range
-                self.last_ring = time.time()
-                SoundPlayer.play("warning2.mp3")
-            elif diff[-1] > self.sigma[0] * std:
-                # warning
-                self.last_ring = time.time()
-                SoundPlayer.play("warning1.mp3")
-
-    def _plot(self, y, std):
-        self.li.set_xdata(self.t)
-        self.li.set_ydata(y)
-
-        self.li_sigma.set_xdata([0, self.t[-1]])
-        self.li_sigma.set_ydata([self.sigma[0] * std, self.sigma[0] * std])
-
-        plt.ylim(0, self.sigma[1] * std)
-        plt.xlim(min(self.t), max(self.t))
-
-        plt.gcf().canvas.draw_idle()
-        plt.gcf().canvas.start_event_loop(self._pause)
-
-    def angle(self, ax, ay, az):
+    @staticmethod
+    def angle(ax, ay, az):
         if ay != 0:
             theta = np.arctan(ax / ay) * 180 / np.pi
         else:
@@ -133,6 +102,39 @@ class Plotter:
         phi = np.arccos(az / np.sqrt(ax*ax + ay*ay + az*az)) * 180 / np.pi
 
         return theta, phi
+
+    def _store_values(self, values):
+        self.t[0:-1] = self.t[1:]
+        self.t[-1] = float(self.count)
+        self.count += 1
+
+        self.values[:, 0:-1] = self.values[:, 1:]
+        self.values[:, -1] = [float(v) for v in values]
+
+    def _check_warning(self, diff, std):
+        if time.time() - self.last_ring > 2:
+            if diff[-1] > self.sigma[1] * std:
+                # over range
+                self.last_ring = time.time()
+                SoundPlayer.play("sfx/warning2.mp3")
+            elif diff[-1] > self.sigma[0] * std:
+                # warning
+                self.last_ring = time.time()
+                SoundPlayer.play("sfx/warning1.mp3")
+
+    def _plot(self, y, std):
+        t = self.t
+        self.li.set_xdata(t)
+        self.li.set_ydata(y)
+
+        self.li_sigma.set_ydata([self.sigma[0] * std, self.sigma[0] * std])
+
+        plt.ylim(0, self.sigma[1] * std)
+        if self.count != 1:
+            plt.xlim(np.min(t), np.max(t))
+
+        plt.gcf().canvas.draw_idle()
+        plt.gcf().canvas.start_event_loop(self._pause)
 
 
     def received(self, data):
@@ -151,8 +153,13 @@ class Plotter:
         y = self.values[self._target_index]
         std = y.std()
 
+        angle = self.angle(self.values[0, -10:].mean(),
+                           self.values[1, -10:].mean(),
+                           self.values[2, -10:].mean())
+        print(angle)
+
         # Calculate deviation from average value
-        diff = abs(y - y.mean())
+        diff = np.abs(y - y.mean())
 
         # Sounds a warning when the deviation exceeds a specified value
         self._check_warning(diff, std)
@@ -169,7 +176,7 @@ SERVICE_UUID = uuid.UUID("8da64251-bc69-4312-9c78-cbfc45cd56ff")
 CHAR_UUID    = uuid.UUID("deb894ea-987c-4339-ab49-2393bcc6ad26")
 
 BLE = Adafruit_BluefruitLE.get_provider()
-PLOTTER = Plotter(interval=2)
+PLOTTER = Plotter(interval=1)
 
 def main():
     BLE.clear_cached_data()
