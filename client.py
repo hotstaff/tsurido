@@ -19,6 +19,10 @@ import Adafruit_BluefruitLE
 plt.style.use('dark_background')
 plt.rcParams['toolbar'] = 'None' 
 
+SERVICE_UUID = uuid.UUID("8da64251-bc69-4312-9c78-cbfc45cd56ff")
+CHAR_UUID    = uuid.UUID("deb894ea-987c-4339-ab49-2393bcc6ad26")
+
+
 class SoundPlayer:
     """SoundPlayer module."""
 
@@ -42,16 +46,17 @@ class SoundPlayer:
 
 
 class Plotter:
-    def __init__(self, target_index=3, interval=1, width=400, pause=0.005,
-                 sigma=(5, 7), xlabel=None, ylabel=None):
+    def __init__(self, interval=1, width=200, pause=0.005, sigma=(5, 7),
+                 angle=True, xlabel=False, ylabel=True):
         # field length
         self.__fieldlength = 4
 
         # main plot config
-        self._target_index = target_index
+        self._target_index = 3
         self._interval = interval
         self._pause = pause
         self._width = width
+        self._angle = angle
         self.sigma = sigma   # [warning, overrange]
 
         self.count = 0
@@ -64,14 +69,29 @@ class Plotter:
         # initial plot
         plt.ion()
         self.fig = plt.figure()
-        self.fig.canvas.set_window_title('Acc')
-        self.li, = plt.plot(self.t, self.values[self._target_index], label="Sensor")
-        self.li_sigma = plt.axhline(y=0)
+        self.fig.canvas.set_window_title('Tsurido Plotter')
+        if self._angle:
+            self.ax1 = self.fig.add_subplot(2, 1, 1)
+        else:
+            self.ax1 = self.fig.add_subplot(1, 1, 1)
 
-        if xlabel is not None:
-            plt.xlabel(xlabel)
-        if ylabel is not None:
-            plt.ylabel(ylabel)
+        self.li, = self.ax1.plot(self.t, self.values[self._target_index],
+                                 label="Acc", color="c")
+        self.li_sigma = self.ax1.axhline(y=0)
+
+        if xlabel:
+            plt.xlabel("count")
+
+        if ylabel:
+            self.ax1.set_ylabel(self.li.get_label())
+
+        if angle:
+            self.tip_angle = np.zeros(self._width)
+            # self.ax2 = self.ax1.twinx()
+            self.ax2 = self.fig.add_subplot(2, 1, 2)
+            self.li2, = self.ax2.plot(self.t, self.tip_angle,
+                                      label="Rod angle", color="r")
+            self.ax2.set_ylabel(self.li2.get_label())
 
     @staticmethod
     def _parse(data):
@@ -111,6 +131,11 @@ class Plotter:
         self.values[:, 0:-1] = self.values[:, 1:]
         self.values[:, -1] = [float(v) for v in values]
 
+    def _store_angle(self, values):
+        angle = self.angle(*[float(v) for v in values[:3]])
+        self.tip_angle[0:-1] = self.tip_angle[1:]
+        self.tip_angle[-1] = np.abs(angle[0])
+
     def _check_warning(self, diff, std):
         if time.time() - self.last_ring > 2:
             if diff[-1] > self.sigma[1] * std:
@@ -123,19 +148,24 @@ class Plotter:
                 SoundPlayer.play("sfx/warning1.mp3")
 
     def _plot(self, y, std):
-        t = self.t
-        self.li.set_xdata(t)
+        self.li.set_xdata(self.t)
         self.li.set_ydata(y)
 
         self.li_sigma.set_ydata([self.sigma[0] * std, self.sigma[0] * std])
 
-        plt.ylim(0, self.sigma[1] * std)
+        self.ax1.set_ylim(0, self.sigma[1] * std)
         if self.count != 1:
-            plt.xlim(np.min(t), np.max(t))
+            self.ax1.set_xlim(np.min(self.t), np.max(self.t))
+
+        if self._angle:
+            self.li2.set_xdata(self.t)
+            self.li2.set_ydata(self.tip_angle)
+            self.ax2.set_xlim(np.min(self.t), np.max(self.t))
+            self.ax2.set_ylim(self.tip_angle.mean() - 10,
+                              self.tip_angle.mean() + 10)
 
         plt.gcf().canvas.draw_idle()
         plt.gcf().canvas.start_event_loop(self._pause)
-
 
     def received(self, data):
         if _pylab_helpers.Gcf.get_active() is None:
@@ -149,14 +179,13 @@ class Plotter:
         # Store value as new values
         self._store_values(values)
 
+        # Calculate and store rod tip angle
+        if self._angle:
+            self._store_angle(values)
+
         # Calculate standard deviation
         y = self.values[self._target_index]
         std = y.std()
-
-        angle = self.angle(self.values[0, -10:].mean(),
-                           self.values[1, -10:].mean(),
-                           self.values[2, -10:].mean())
-        print(angle)
 
         # Calculate deviation from average value
         diff = np.abs(y - y.mean())
@@ -170,13 +199,6 @@ class Plotter:
             self._plot(diff, std)
 
         # print('{0}'.format(data))
-
-
-SERVICE_UUID = uuid.UUID("8da64251-bc69-4312-9c78-cbfc45cd56ff")
-CHAR_UUID    = uuid.UUID("deb894ea-987c-4339-ab49-2393bcc6ad26")
-
-BLE = Adafruit_BluefruitLE.get_provider()
-PLOTTER = Plotter(interval=1)
 
 def main():
     BLE.clear_cached_data()
@@ -221,5 +243,9 @@ def main():
     return 0
 
 
-BLE.initialize()
-BLE.run_mainloop_with(main)
+if __name__ == '__main__':
+    BLE = Adafruit_BluefruitLE.get_provider()
+    PLOTTER = Plotter(interval=4, angle=True)
+
+    BLE.initialize()
+    BLE.run_mainloop_with(main)
