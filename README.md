@@ -2,9 +2,13 @@
 
 # DEMO
 
+![最小構成](doc/minimum.png)
+
+ADXL345とM5StickCをつなげたものを使います。
+
 ![センス](sense.png)
 
-作成中...
+加速度と竿先の角度をモニタリングします。黄色い線は警報のしきい値を表しています。
 
 # 機能
 
@@ -16,7 +20,10 @@
 センサー側：
 
 * M5StickC
-* ADXL345
+
+* ADXL345(groove接続)
+
+![ADXL345](doc/adxl345.png)
 
 クライアント側：
 
@@ -62,13 +69,26 @@ sudo pip install numpy matplotlib pyaudio simpleaudio pydub
 
 # 使い方
 
-DEMOの実行方法など、"hoge"の基本的な使い方を説明する
+## リポジトリのクローン
 
 ```bash
 git clone https://github.com/hotstaff/tsurido
 cd tsurido
+```
+
+## M5StickCのスケッチの転送
+
+ArduinoIDEからスケッチを転送してください。正常に書き込めれば、電源を入れるとすぐに測定を開始します。
+
+## クライアントの起動
+
+Bluetoothアダプターを接続したあとclient.pyを実行してください。
+
+```bash
 python client.py
 ```
+
+プロッターが起動します。
 
 # 注意
 
