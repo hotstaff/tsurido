@@ -7,6 +7,7 @@ Licence: LGPL
 import time
 import uuid
 import numpy as np
+import csv
 
 from matplotlib import pyplot as plt
 from matplotlib import _pylab_helpers
@@ -47,7 +48,7 @@ class SoundPlayer:
 
 class Plotter:
     def __init__(self, interval=1, width=200, pause=0.005, sigma=(5, 7),
-                 angle=True, xlabel=False, ylabel=True):
+                 angle=True, xlabel=False, ylabel=True, logger=False):
         # field length
         self.__fieldlength = 4
 
@@ -58,10 +59,13 @@ class Plotter:
         self._width = width
         self._angle = angle
         self.sigma = sigma   # [warning, overrange]
+        self._logger = logger
 
         self.count = 0
         self.closed = False # plotter end flag
-        self.last_ring = time.time() + 3
+        self._last_ring = time.time() + 3
+        self._logger_uid = int(time.time())
+        self._logger_buff = [["count", "unixtime", "Ax", "Ay", "Az", "A"]]
 
         self.t = np.zeros(self._width)
         self.values = np.zeros((self.__fieldlength, self._width))
@@ -119,9 +123,23 @@ class Plotter:
             else:
                 theta = 0
 
-        phi = np.arccos(az / np.sqrt(ax*ax + ay*ay + az*az)) * 180 / np.pi
+        scalor = np.sqrt(ax*ax + ay*ay + az*az)
+
+        if scalor != 0:
+            phi = np.arccos(az / scalor) * 180 / np.pi
+        else:
+            phi = 0
 
         return theta, phi
+
+    def _write_log(self, row): 
+        self._logger_buff.append([self.count] + [time.time()] + row)
+
+        if len(self._logger_buff) > 20:
+            with open(f'{self._logger_uid}.csv', 'a') as f:
+                writer = csv.writer(f)
+                writer.writerows(self._logger_buff)
+                self._logger_buff.clear()
 
     def _store_values(self, values):
         self.t[0:-1] = self.t[1:]
@@ -137,14 +155,14 @@ class Plotter:
         self.tip_angle[-1] = np.abs(angle[0])
 
     def _check_warning(self, diff, std):
-        if time.time() - self.last_ring > 2:
+        if time.time() - self._last_ring > 2:
             if diff[-1] > self.sigma[1] * std:
                 # over range
-                self.last_ring = time.time()
+                self._last_ring = time.time()
                 SoundPlayer.play("sfx/warning2.mp3")
             elif diff[-1] > self.sigma[0] * std:
                 # warning
-                self.last_ring = time.time()
+                self._last_ring = time.time()
                 SoundPlayer.play("sfx/warning1.mp3")
 
     def _plot(self, y, std):
@@ -198,6 +216,9 @@ class Plotter:
         if self.count % self._interval == 0:
             self._plot(diff, std)
 
+        if self._logger:
+            self._write_log(values)
+
         # print('{0}'.format(data))
 
 def main():
@@ -246,6 +267,5 @@ def main():
 if __name__ == '__main__':
     BLE = Adafruit_BluefruitLE.get_provider()
     PLOTTER = Plotter(interval=4, angle=True)
-
     BLE.initialize()
     BLE.run_mainloop_with(main)
