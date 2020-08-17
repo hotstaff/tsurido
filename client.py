@@ -1,13 +1,22 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """ Trurido client
 
-Copyright 2020 Hideto Manjo.
+  TsuridoMonitor: Sensor monitoring program for surf fishing
+
+TODO:
+    require modules: numpy, matplotlib, pydub, simpleaudio,
+                     Adafruit_bluefruitLE
+
+Copyright 2020 Hideto Manjo
 Licence: LGPL
 """
 
 import time
 import uuid
-import numpy as np
 import csv
+import numpy as np
+
 
 from matplotlib import pyplot as plt
 from matplotlib import _pylab_helpers
@@ -47,6 +56,7 @@ class SoundPlayer:
 
 
 class Plotter:
+    """Tsurido Plotter module"""
     def __init__(self, interval=1, width=200, pause=0.005, sigma=(5, 7),
                  angle=True, xlabel=False, ylabel=True, logger=False):
         # field length
@@ -112,7 +122,7 @@ class Plotter:
         return labels, values
 
     @staticmethod
-    def angle(ax, ay, az):
+    def _get_angle(ax, ay, az):
         if ay != 0:
             theta = np.arctan(ax / ay) * 180 / np.pi
         else:
@@ -132,7 +142,7 @@ class Plotter:
 
         return theta, phi
 
-    def _write_log(self, row): 
+    def _write_log(self, row):
         self._logger_buff.append([self.count] + [time.time()] + row)
 
         if len(self._logger_buff) > 20:
@@ -150,7 +160,7 @@ class Plotter:
         self.values[:, -1] = [float(v) for v in values]
 
     def _store_angle(self, values):
-        angle = self.angle(*[float(v) for v in values[:3]])
+        angle = self._get_angle(*[float(v) for v in values[:3]])
         self.tip_angle[0:-1] = self.tip_angle[1:]
         self.tip_angle[-1] = np.abs(angle[0])
 
@@ -186,6 +196,14 @@ class Plotter:
         plt.gcf().canvas.start_event_loop(self._pause)
 
     def received(self, data):
+        """Recieved Event
+            Event to be performed when data is received
+        Args:
+            data (str): bluetooth received data
+
+        Returns:
+            Always None
+        """
         if _pylab_helpers.Gcf.get_active() is None:
             # end flag
             self.closed = True
