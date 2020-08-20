@@ -5,7 +5,7 @@
 //               of the rod to see if the fish is caught. Acceleration is 
 //               transmitted in real time via Bluetooth and can be monitored 
 //               from a laptop.
-//  Hardware:    M5StickC + ADXL345(Groove)
+//  Hardware:    M5StickC + ADXL345(Grove)
 //  Arduino IDE: Arduino-1.8.13
 //  Author:  Hideto Manjo     
 //  Date:    Aug 9, 2020

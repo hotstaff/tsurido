@@ -21,7 +21,7 @@ ADXL345とM5StickCをつなげたものを使います。
 
 * M5StickC
 
-* ADXL345(groove接続)
+* ADXL345(grove接続)
 
 ![ADXL345](doc/adxl345.png)
 
