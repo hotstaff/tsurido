@@ -44,4 +44,5 @@ env.bak/
 venv.bak/
 
 # resource
-sfx
+sfx/*
+!sfx/README.md
