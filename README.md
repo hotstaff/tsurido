@@ -1,23 +1,26 @@
 # Tsurido - M5StickCで投げ釣りの当たり判定をする
 
-# DEMO
-
-![最小構成](doc/minimum.png)
-
-ADXL345とM5StickCをつなげたものを使います。
-
-![センス](sense.png)
-
-加速度と竿先の角度をモニタリングします。黄色い線は警報のしきい値を表しています。
+[![Github license](https://img.shields.io/github/license/hotstaff/tsurido)](https://github.com/hotstaff/tsurido/)
 
 # 機能
 
 竿先に加速度センサー(ADXL345)を取り付けて魚のアタリを検知します。加速度の統計的外れ値を検出してアタリを判定します。
 
+## ハードウェア最小構成
+
+![最小構成](doc/minimum.png)
+
+ADXL345とM5StickCをつなげたものを使います。
+
+# DEMO
+
+![センス](sense.png)
+
+加速度と竿先の角度をモニタリングします。黄色い線は警報のしきい値を表しています。
 
 # 必須条件
 
-センサー側：
+## センサー側
 
 * M5StickC
 
@@ -25,7 +28,7 @@ ADXL345とM5StickCをつなげたものを使います。
 
 ![ADXL345](doc/adxl345.png)
 
-クライアント側：
+## クライアント側
 
 * Python3が動く環境
 * Bluetoothアダプターが使えること
