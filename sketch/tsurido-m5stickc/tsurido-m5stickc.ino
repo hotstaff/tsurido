@@ -94,6 +94,10 @@ void setup_ble(){
 
 void setup() {
         M5.begin();
+
+        // Check i2c pin assignment SDA=32, SDL=33
+        Wire.begin(32, 33);
+
         Serial.begin(BAUDRATE);
         setup_adxl345();
         setup_ble();
