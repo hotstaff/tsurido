@@ -79,7 +79,7 @@ git clone https://github.com/hotstaff/tsurido
 cd tsurido
 ```
 
-## M5StickCのスケッチの転送
+## スケッチの転送
 
 まず、ArduinoIDEから次のADXL345のライブラリが使用できるようにしてください。
 
@@ -88,7 +88,7 @@ cd tsurido
          - Seeed Studio
      - [Website(githubのリポジトリ)](https://github.com/Seeed-Studio/Accelerometer_ADXL345)
 
-その後、ArduinoIDEからスケッチを転送してください。正常に書き込めれば、電源を入れるとすぐに測定を開始します。
+その後、ArduinoIDEからスケッチを転送してください。正常に書き込められば、電源を入れるとすぐに測定を開始します。
 
 ## クライアントの起動
 
