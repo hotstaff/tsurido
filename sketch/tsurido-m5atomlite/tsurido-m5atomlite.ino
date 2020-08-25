@@ -5,7 +5,7 @@
 //               of the rod to see if the fish is caught. Acceleration is 
 //               transmitted in real time via Bluetooth and can be monitored 
 //               from a laptop.
-//  Hardware:    M5Atom Lite + ADXL345(Grove)
+//  Hardware:    M5Atom + ADXL345(Grove)
 //  Arduino IDE: Arduino-1.8.13
 //  Author:  Hideto Manjo     
 //  Date:    Aug 9, 2020
@@ -42,6 +42,7 @@
 #define COLOR_NEON_RED      {0xFE, 0x00, 0x00}
 #define COLOR_NEON_GREEN    {0x0B, 0xFF, 0x01}
 #define COLOR_NEON_BLUE     {0x01, 0x1E, 0xFE}
+#define COLOR_NEON_YELLOW   {0xFD, 0xFE, 0x02}
 
 #define SCALAR(x, y, z)     sqrt(x*x + y*y + z*z)
 
@@ -51,6 +52,7 @@ ADXL345 adxl;
 
 // FLAGS
 bool deviceConnected = false;
+bool oldDeviceConnected = false;
 
 int x = 0;
 int y = 0;
@@ -59,12 +61,14 @@ int scalar;
 char msg[128];
 
 uint8_t color_error[3] = COLOR_NEON_RED;
+uint8_t color_warning[3] = COLOR_NEON_YELLOW;
 uint8_t color_success[3] = COLOR_NEON_GREEN;
 uint8_t color_bluetooh[3] = COLOR_NEON_BLUE;
 
 uint8_t DisBuff[2 + 1 * 3];
 
-void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata) {
+void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
+{
         DisBuff[0] = 0x01;
         DisBuff[1] = 0x01;
         DisBuff[2 + 0] = Rdata;
@@ -72,56 +76,72 @@ void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata) {
         DisBuff[2 + 2] = Bdata;
 }
 
-void setColor(uint8_t *rgb) {
+void changeColor(uint8_t *rgb)
+{
         setBuff(*rgb, *(rgb + 1), *(rgb + 2));
         M5.dis.displaybuff(DisBuff);
 }
 
-class MyServerCallbacks: public BLEServerCallbacks {
-        void onConnect(BLEServer* pServer) {
+class MyServerCallbacks: public BLEServerCallbacks
+{
+        void onConnect(BLEServer* pServer)
+        {
                 deviceConnected = true;
+                BLEDevice::startAdvertising();
         }
 
-        void onDisconnect(BLEServer* pServer) {
+        void onDisconnect(BLEServer* pServer)
+        {
                 deviceConnected = false;
         }
 };
 
-void setup_adxl345() {
+void setup_adxl345()
+{
         adxl.powerOn();
 }
 
-void setup_ble(){
+void setup_ble()
+{       
         BLEDevice::init(DEVICE_NAME);
         BLEServer *pServer = BLEDevice::createServer();
         pServer->setCallbacks(new MyServerCallbacks());
+
         BLEService *pService = pServer->createService(SERVICE_UUID);
+
         pCharacteristic = pService->createCharacteristic(
-                                  CHARACTERISTIC_UUID,
-                                  BLECharacteristic::PROPERTY_READ |
-                                  BLECharacteristic::PROPERTY_WRITE |
-                                  BLECharacteristic::PROPERTY_NOTIFY |
-                                  BLECharacteristic::PROPERTY_INDICATE
+                CHARACTERISTIC_UUID,
+                BLECharacteristic::PROPERTY_READ |
+                BLECharacteristic::PROPERTY_WRITE |
+                BLECharacteristic::PROPERTY_NOTIFY |
+                BLECharacteristic::PROPERTY_INDICATE
                           );
         pCharacteristic->addDescriptor(new BLE2902());
 
         pService->start();
-        BLEAdvertising *pAdvertising = pServer->getAdvertising();
-        pAdvertising->start();
+
+        BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+        pAdvertising->addServiceUUID(SERVICE_UUID);
+        pAdvertising->setScanResponse(false);
+        pAdvertising->setMinPreferred(0x0);
+        BLEDevice::startAdvertising();
 }
 
-void setup() {
-        M5.begin(true, false, true);
+void setup()
+{
+        M5.begin(false, false, true);
         setBuff(0x88, 0x88, 0x88);
         M5.dis.displaybuff(DisBuff);
         // Check i2c pin number SDA=26, SDL=32
         Wire.begin(26, 32);
         Serial.begin(BAUDRATE);
+        Serial.flush();
         setup_adxl345();
         setup_ble();
 }
 
-void loop() {
+void loop()
+{
         // get ADXL345 data
         adxl.readXYZ(&x, &y, &z);
 
@@ -130,12 +150,12 @@ void loop() {
 
         if (scalar != 0) {
                 if (deviceConnected) {
-                        setColor(color_bluetooh);
+                        changeColor(color_bluetooh);
                 } else {
-                        setColor(color_success);
+                        changeColor(color_success);
                 }
         } else {
-                setColor(color_error);
+                changeColor(color_error);
         }
                           
         
@@ -147,7 +167,19 @@ void loop() {
                 pCharacteristic->notify();
         }
 
-        M5.update();
+        // disconnecting
+        if (!deviceConnected && oldDeviceConnected) {
+            changeColor(color_warning);
+            delay(500);
+            pServer->startAdvertising();
+            oldDeviceConnected = deviceConnected;
+        }
+
+        // connecting
+        if (deviceConnected && !oldDeviceConnected) {
+            oldDeviceConnected = deviceConnected;
+        }
+
         delay(DELAY);
 
 }
