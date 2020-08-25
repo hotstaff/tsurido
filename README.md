@@ -22,7 +22,7 @@ ADXL345とM5StickCをつなげたものを使います。
 
 ## センサー側
 
-* M5StickC
+* M5StickCもしくはM5AtomLite
 
 * ADXL345(grove接続)
 
