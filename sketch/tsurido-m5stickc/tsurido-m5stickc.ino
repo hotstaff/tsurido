@@ -47,6 +47,7 @@ ADXL345 adxl;
 
 // FLAGS
 bool deviceConnected = false;
+bool oldDeviceConnected = false;
 
 int x = 0;
 int y = 0;
@@ -55,50 +56,63 @@ int scalar;
 char msg[128];
 
 
-class MyServerCallbacks: public BLEServerCallbacks {
-                void onConnect(BLEServer* pServer) {
-                        M5.Lcd.setCursor(10, 110);
-                        M5.Lcd.println("Con");
-                        deviceConnected = true;
-                }
+class MyServerCallbacks: public BLEServerCallbacks
+{
+        void onConnect(BLEServer* pServer)
+        {
+                M5.Lcd.setCursor(10, 110);
+                M5.Lcd.println("Con");
+                deviceConnected = true;
+        }
 
-                void onDisconnect(BLEServer* pServer) {
-                        M5.Lcd.setCursor(10, 110);
-                        M5.Lcd.println("   ");
-                        deviceConnected = false;
-                }
+        void onDisconnect(BLEServer* pServer)
+        {
+                M5.Lcd.setCursor(10, 110);
+                M5.Lcd.println("   ");
+                deviceConnected = false;
+        }
 };
 
-void setup_adxl345() {
+void setup_adxl345()
+{
         adxl.powerOn();
 }
 
-void setup_ble(){
+void setup_ble()
+{       
         BLEDevice::init(DEVICE_NAME);
         BLEServer *pServer = BLEDevice::createServer();
         pServer->setCallbacks(new MyServerCallbacks());
+
         BLEService *pService = pServer->createService(SERVICE_UUID);
+
         pCharacteristic = pService->createCharacteristic(
-                                  CHARACTERISTIC_UUID,
-                                  BLECharacteristic::PROPERTY_READ |
-                                  BLECharacteristic::PROPERTY_WRITE |
-                                  BLECharacteristic::PROPERTY_NOTIFY |
-                                  BLECharacteristic::PROPERTY_INDICATE
+                CHARACTERISTIC_UUID,
+                BLECharacteristic::PROPERTY_READ |
+                BLECharacteristic::PROPERTY_WRITE |
+                BLECharacteristic::PROPERTY_NOTIFY |
+                BLECharacteristic::PROPERTY_INDICATE
                           );
         pCharacteristic->addDescriptor(new BLE2902());
 
         pService->start();
-        BLEAdvertising *pAdvertising = pServer->getAdvertising();
-        pAdvertising->start();
+
+        BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+        pAdvertising->addServiceUUID(SERVICE_UUID);
+        pAdvertising->setScanResponse(false);
+        pAdvertising->setMinPreferred(0x0);
+        BLEDevice::startAdvertising();
 }
 
-void setup() {
-        M5.begin();
+void setup()
+{
+        M5.begin(true, true, false);
 
         // Check i2c pin assignment SDA=32, SDL=33
         Wire.begin(32, 33);
 
         Serial.begin(BAUDRATE);
+        Serial.flush();
         setup_adxl345();
         setup_ble();
         M5.Lcd.setRotation(LCD_ROTATION);
@@ -109,7 +123,8 @@ void setup() {
         M5.Lcd.println("  do ");
 }
 
-void loop() {
+void loop()
+{
         M5.update();
 
         // get ADXL345 data
@@ -122,11 +137,21 @@ void loop() {
         sprintf(msg, "Ax, Ay, Az, A: %d, %d, %d, %d", x, y, z, scalar);
         
         if (SERIAL)
-            Serial.println(msg);
+                Serial.println(msg);
 
         if (deviceConnected) {
                 pCharacteristic->setValue(msg);
                 pCharacteristic->notify();
+        }
+
+        if (!deviceConnected && oldDeviceConnected) {
+                delay(500);
+                pServer->startAdvertising();
+                oldDeviceConnected = deviceConnected;
+        }
+
+        if (deviceConnected && !oldDeviceConnected) {
+                oldDeviceConnected = deviceConnected;
         }
 
         delay(DELAY);

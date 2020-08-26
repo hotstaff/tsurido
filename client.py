@@ -16,6 +16,7 @@ import time
 import uuid
 import csv
 import numpy as np
+import argparse
 
 
 from matplotlib import pyplot as plt
@@ -253,7 +254,7 @@ def main():
     adapter.start_scan()
 
     try:
-        device = BLE.find_device(name="Tsurido", timeout_sec=5)
+        device = BLE.find_device(name=ARGS.DEVICE_NAME, timeout_sec=5)
         if device is None:
             raise RuntimeError('Failed to find device!')
     finally:
@@ -275,14 +276,38 @@ def main():
     while not PLOTTER.closed:
         time.sleep(0.1)
 
-    print('Disconnecting to device...')
-    device.disconnect()
+    if ARGS.keepalive:
+        print('Keep-alive connection...')
+    else:
+        print('Disconnecting to device...')
+        device.disconnect()
 
     print("Stop.")
     return 0
 
 
+def parser():
+    """Paser."""
+    usage = f'Usage: python {__file__} [option] [--help]'
+    formatter_class = argparse.ArgumentDefaultsHelpFormatter
+    argparser = argparse.ArgumentParser(usage=usage,
+                                        formatter_class=formatter_class)
+    argparser.add_argument('DEVICE_NAME',
+                           action='store',
+                           nargs='?',
+                           default="Tsurido",
+                           type=str,
+                           help='Enter the device name')
+
+    argparser.add_argument('--keepalive',
+                           action='store_true',
+                           help='No disconnect')
+
+    return argparser.parse_args()
+
+
 if __name__ == '__main__':
+    ARGS = parser()
     BLE = Adafruit_BluefruitLE.get_provider()
     PLOTTER = Plotter(interval=4, angle=True)
     BLE.initialize()

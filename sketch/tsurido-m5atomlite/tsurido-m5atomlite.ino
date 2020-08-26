@@ -167,7 +167,6 @@ void loop()
                 pCharacteristic->notify();
         }
 
-        // disconnecting
         if (!deviceConnected && oldDeviceConnected) {
             changeColor(color_warning);
             delay(500);
@@ -175,7 +174,6 @@ void loop()
             oldDeviceConnected = deviceConnected;
         }
 
-        // connecting
         if (deviceConnected && !oldDeviceConnected) {
             oldDeviceConnected = deviceConnected;
         }
