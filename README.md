@@ -35,6 +35,15 @@ ADXL345とM5StickCをつなげたものを使います。
 
 # インストール
 
+## リポジトリのクローン
+
+```bash
+git clone https://github.com/hotstaff/tsurido
+cd tsurido
+```
+
+## ライブラリのインストール
+
 以下のライブラリをインストールしてください。
 
 * 必須ライブラリ
@@ -70,14 +79,9 @@ sudo apt-get install portaudio19-dev
 sudo pip install numpy matplotlib pyaudio simpleaudio pydub
 ```
 
+これで使う準備ができました。
+
 # 使い方
-
-## リポジトリのクローン
-
-```bash
-git clone https://github.com/hotstaff/tsurido
-cd tsurido
-```
 
 ## スケッチの転送
 
@@ -88,7 +92,7 @@ cd tsurido
          - Seeed Studio
      - [Website(githubのリポジトリ)](https://github.com/Seeed-Studio/Accelerometer_ADXL345)
 
-その後、ArduinoIDEからスケッチを転送してください。正常に書き込められば、電源を入れるとすぐに測定を開始します。
+その後、ArduinoIDEからsketchフォルダの以下にあるスケッチを転送してください。正常に書き込められれば、電源を入れるとすぐに測定を開始します。
 
 ## クライアントの起動
 
