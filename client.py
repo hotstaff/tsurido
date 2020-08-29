@@ -247,8 +247,17 @@ def main():
     adapter.power_on()
     print('Using adapter: {0}'.format(adapter.name))
 
-    print('Disconnecting any connected devices...')
-    BLE.disconnect_devices([SERVICE_UUID])
+    if ARGS.reset:
+        print('Disconnecting any connected devices...')
+        BLE.disconnect_devices([SERVICE_UUID])
+
+    devices = BLE.list_devices()
+    print("Current connections:") if devices else print("No current connetion.")
+    for i, d in enumerate(devices):
+        print(f" {i}.{d.name}")
+        if d.name == ARGS.DEVICE_NAME:
+            print(f"Disconnecting {d.name}...")
+            d.disconnect()
 
     print('Searching device...')
     adapter.start_scan()
@@ -288,7 +297,7 @@ def main():
 
 def parser():
     """Paser."""
-    usage = f'Usage: python {__file__} [option] [--help]'
+    usage = f'Usage: python {__file__} DEVICE_NAME [--keepalive] [--help]'
     formatter_class = argparse.ArgumentDefaultsHelpFormatter
     argparser = argparse.ArgumentParser(usage=usage,
                                         formatter_class=formatter_class)
@@ -303,12 +312,16 @@ def parser():
                            action='store_true',
                            help='No disconnect')
 
+    argparser.add_argument('--reset',
+                           action='store_true',
+                           help='Reset current connection')
+
     return argparser.parse_args()
 
 
 if __name__ == '__main__':
     ARGS = parser()
     BLE = Adafruit_BluefruitLE.get_provider()
-    PLOTTER = Plotter(interval=4, angle=True)
+    PLOTTER = Plotter(interval=4, angle=True, logger=True)
     BLE.initialize()
     BLE.run_mainloop_with(main)
