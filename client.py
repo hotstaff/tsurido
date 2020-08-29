@@ -16,6 +16,7 @@ import time
 import uuid
 import csv
 import argparse
+from datetime import datetime
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -75,7 +76,7 @@ class Plotter:
         self._plot_count = 0
         self.closed = False # plotter end flag
         self._last_ring = time.time() + 3
-        self._logger_uid = int(time.time())
+        self._logger_uid = datetime.now().strftime('%Y%m%d_%H%M%S')
         self._logger_buff = [["count", "unixtime", "Ax", "Ay", "Az", "A"]]
 
         self.t = np.zeros(self._width)
