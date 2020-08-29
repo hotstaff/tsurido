@@ -58,7 +58,7 @@ class SoundPlayer:
 
 class Plotter:
     """Tsurido Plotter module"""
-    def __init__(self, interval=1, width=200, pause=0.005, sigma=(5, 7),
+    def __init__(self, interval=1, width=200, pause=0.001, sigma=(5, 7),
                  angle=True, xlabel=False, ylabel=True, logger=False):
         # field length
         self.__fieldlength = 4
@@ -308,6 +308,11 @@ def parser():
                            type=str,
                            help='Enter the device name')
 
+    argparser.add_argument('-i', '--interval',
+                           type=int,
+                           default=4,
+                           help='Plot interval Ex: 1 = realtime, 2 = only even times')
+
     argparser.add_argument('--keepalive',
                            action='store_true',
                            help='No disconnect')
@@ -322,6 +327,8 @@ def parser():
 if __name__ == '__main__':
     ARGS = parser()
     BLE = Adafruit_BluefruitLE.get_provider()
-    PLOTTER = Plotter(interval=4, angle=True, logger=True)
+    PLOTTER = Plotter(interval=ARGS.interval if ARGS.interval > 0 else 1,
+                      angle=True,
+                      logger=True)
     BLE.initialize()
     BLE.run_mainloop_with(main)
