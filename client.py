@@ -15,9 +15,8 @@ Licence: LGPL
 import time
 import uuid
 import csv
-import numpy as np
 import argparse
-
+import numpy as np
 
 from matplotlib import pyplot as plt
 from matplotlib import _pylab_helpers
@@ -28,7 +27,7 @@ import simpleaudio
 import Adafruit_BluefruitLE
 
 plt.style.use('dark_background')
-plt.rcParams['toolbar'] = 'None' 
+plt.rcParams['toolbar'] = 'None'
 
 SERVICE_UUID = uuid.UUID("8da64251-bc69-4312-9c78-cbfc45cd56ff")
 CHAR_UUID    = uuid.UUID("deb894ea-987c-4339-ab49-2393bcc6ad26")
@@ -36,7 +35,6 @@ CHAR_UUID    = uuid.UUID("deb894ea-987c-4339-ab49-2393bcc6ad26")
 
 class SoundPlayer:
     """SoundPlayer module."""
-
     @classmethod
     def play(cls, filename, audio_format="mp3", wait=False, stop=False):
         """Play audio file."""
@@ -59,7 +57,8 @@ class SoundPlayer:
 class Plotter:
     """Tsurido Plotter module"""
     def __init__(self, interval=1, width=200, pause=0.001, sigma=(5, 7),
-                 angle=True, xlabel=False, ylabel=True, logger=False):
+                 angle=True, xlabel=False, ylabel=True, logger=False,
+                 title="Tsurido Plotter"):
         # field length
         self.__fieldlength = 4
 
@@ -73,6 +72,7 @@ class Plotter:
         self._logger = logger
 
         self.count = 0
+        self._plot_count = 0
         self.closed = False # plotter end flag
         self._last_ring = time.time() + 3
         self._logger_uid = int(time.time())
@@ -84,7 +84,7 @@ class Plotter:
         # initial plot
         plt.ion()
         self.fig = plt.figure()
-        self.fig.canvas.set_window_title('Tsurido Plotter')
+        self.fig.canvas.set_window_title(title)
         if self._angle:
             self.ax1 = self.fig.add_subplot(2, 1, 1)
         else:
@@ -252,12 +252,16 @@ def main():
         BLE.disconnect_devices([SERVICE_UUID])
 
     devices = BLE.list_devices()
-    print("Current connections:") if devices else print("No current connetion.")
-    for i, d in enumerate(devices):
-        print(f" {i}.{d.name}")
-        if d.name == ARGS.DEVICE_NAME:
-            print(f"Disconnecting {d.name}...")
-            d.disconnect()
+    if devices:
+        print("Current connections:")
+    else:
+        print("No current connetion.")
+
+    for i, dev in enumerate(devices, start=1):
+        print(f" {i}.{dev.name}")
+        if dev.name == ARGS.DEVICE_NAME:
+            print(f"Disconnecting {dev.name}...")
+            dev.disconnect()
 
     print('Searching device...')
     adapter.start_scan()
@@ -313,6 +317,10 @@ def parser():
                            default=4,
                            help='Plot interval Ex: 1 = realtime, 2 = only even times')
 
+    argparser.add_argument('--logging',
+                           action='store_true',
+                           help='Enable logging')
+
     argparser.add_argument('--keepalive',
                            action='store_true',
                            help='No disconnect')
@@ -329,6 +337,7 @@ if __name__ == '__main__':
     BLE = Adafruit_BluefruitLE.get_provider()
     PLOTTER = Plotter(interval=ARGS.interval if ARGS.interval > 0 else 1,
                       angle=True,
-                      logger=True)
+                      logger=ARGS.logging,
+                      title=f"Tsurido Plotter - {ARGS.DEVICE_NAME}")
     BLE.initialize()
     BLE.run_mainloop_with(main)
