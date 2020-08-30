@@ -62,7 +62,7 @@ class Plotter:
                  title="Tsurido Plotter"):
         # define
         self.__indexes = ("Ax", "Ay", "Az", "A")
-        self.__target_index = 3 # sencoring
+        self.__target_index = 3 # detection target
 
         # main plot config
         self._interval = interval
