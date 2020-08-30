@@ -60,11 +60,11 @@ class Plotter:
     def __init__(self, interval=1, width=200, pause=0.001, sigma=(5, 7),
                  angle=True, xlabel=False, ylabel=True, logger=False,
                  title="Tsurido Plotter"):
-        # field length
-        self.__fieldlength = 4
+        # define
+        self.__indexes = ("Ax", "Ay", "Az", "A")
+        self.__target_index = 3 # sencoring
 
         # main plot config
-        self._target_index = 3
         self._interval = interval
         self._pause = pause
         self._width = width
@@ -77,10 +77,10 @@ class Plotter:
         self.closed = False # plotter end flag
         self._last_ring = time.time() + 3
         self._logger_uid = datetime.now().strftime('%Y%m%d_%H%M%S')
-        self._logger_buff = [["count", "unixtime", "Ax", "Ay", "Az", "A"]]
+        self._logger_buff = [["count", "unixtime"] + list(self.__indexes)]
 
         self.t = np.zeros(self._width)
-        self.values = np.zeros((self.__fieldlength, self._width))
+        self.values = np.zeros((4, self._width))
 
         # initial plot
         plt.ion()
@@ -91,7 +91,7 @@ class Plotter:
         else:
             self.ax1 = self.fig.add_subplot(1, 1, 1)
 
-        self.li, = self.ax1.plot(self.t, self.values[self._target_index],
+        self.li, = self.ax1.plot(self.t, self.values[self.__target_index],
                                  label="Acc", color="c")
         self.li_sigma = self.ax1.axhline(y=0)
 
@@ -212,7 +212,13 @@ class Plotter:
             return
 
         # Parse
-        _labels, values = self._parse(data)
+        labels, values = self._parse(data)
+
+        # Sort
+        values = [values[labels.index(self.__indexes[0])],
+                  values[labels.index(self.__indexes[1])],
+                  values[labels.index(self.__indexes[2])],
+                  values[labels.index(self.__indexes[3])]]
 
         # Store value as new values
         self._store_values(values)
@@ -222,7 +228,7 @@ class Plotter:
             self._store_angle(values)
 
         # Calculate standard deviation
-        y = self.values[self._target_index]
+        y = self.values[self.__target_index]
         std = y.std()
 
         # Calculate deviation from average value
