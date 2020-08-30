@@ -306,7 +306,7 @@ def main():
 
 
 def parser():
-    """Paser."""
+    """Paser"""
     usage = f'Usage: python {__file__} DEVICE_NAME [--keepalive] [--help]'
     formatter_class = argparse.ArgumentDefaultsHelpFormatter
     argparser = argparse.ArgumentParser(usage=usage,
@@ -322,6 +322,11 @@ def parser():
                            type=int,
                            default=4,
                            help='Plot interval Ex: 1 = realtime, 2 = only even times')
+
+    argparser.add_argument('-w', '--width',
+                           type=int,
+                           default=200,
+                           help='Plot width')
 
     argparser.add_argument('--logging',
                            action='store_true',
@@ -342,6 +347,7 @@ if __name__ == '__main__':
     ARGS = parser()
     BLE = Adafruit_BluefruitLE.get_provider()
     PLOTTER = Plotter(interval=ARGS.interval if ARGS.interval > 0 else 1,
+                      width=ARGS.width if ARGS.width > 1 else 200,
                       angle=True,
                       logger=ARGS.logging,
                       title=f"Tsurido Plotter - {ARGS.DEVICE_NAME}")
