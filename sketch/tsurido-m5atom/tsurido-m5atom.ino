@@ -39,6 +39,8 @@
 #define SERIAL              true   // With/without serial communication
 #define BAUDRATE            115200 // Serial communication baud rate
 
+#define USE_MPU6886         false   // M5Atom Matrix Only
+
 #define COLOR_NEON_RED      {0xFE, 0x00, 0x00}
 #define COLOR_NEON_GREEN    {0x0B, 0xFF, 0x01}
 #define COLOR_NEON_BLUE     {0x01, 0x1E, 0xFE}
@@ -54,26 +56,22 @@ ADXL345 adxl;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-int x = 0;
-int y = 0;
-int z = 0;
-int scalar;
-char msg[128];
-
 uint8_t color_error[3] = COLOR_NEON_RED;
 uint8_t color_warning[3] = COLOR_NEON_YELLOW;
 uint8_t color_success[3] = COLOR_NEON_GREEN;
 uint8_t color_bluetooh[3] = COLOR_NEON_BLUE;
 
-uint8_t DisBuff[2 + 1 * 3];
+uint8_t DisBuff[2 + 25 * 3];
 
 void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
-{
-        DisBuff[0] = 0x01;
-        DisBuff[1] = 0x01;
-        DisBuff[2 + 0] = Rdata;
-        DisBuff[2 + 1] = Gdata;
-        DisBuff[2 + 2] = Bdata;
+{       
+        DisBuff[0] = 0x05;
+        DisBuff[1] = 0x05;
+        for (int i = 0; i < 25; i++) {
+                DisBuff[(3 * i) + 2] = Rdata;
+                DisBuff[(3 * i) + 3] = Gdata;
+                DisBuff[(3 * i) + 4] = Bdata;
+        }  
 }
 
 void changeColor(uint8_t *rgb)
@@ -101,6 +99,16 @@ void setup_adxl345()
         adxl.powerOn();
 }
 
+void setup_acc()
+{
+        if (USE_MPU6886) {
+                M5.IMU.Init();
+                return;
+        }
+        
+        setup_adxl345();
+}    
+
 void setup_ble()
 {       
         BLEDevice::init(DEVICE_NAME);
@@ -127,6 +135,20 @@ void setup_ble()
         BLEDevice::startAdvertising();
 }
 
+void read_acc(int* x, int* y, int* z)
+{       
+        if (USE_MPU6886) {
+                int16_t ax, ay, az;
+                M5.IMU.getAccelAdc(&ax, &ay, &az);
+                *x = (int) ax;
+                *y = (int) ay;
+                *z = (int) az;
+                return;
+        }
+
+        adxl.readXYZ(x, y, z);
+}
+
 void setup()
 {
         M5.begin(false, false, true);
@@ -136,14 +158,22 @@ void setup()
         Wire.begin(26, 32);
         Serial.begin(BAUDRATE);
         Serial.flush();
-        setup_adxl345();
+        setup_acc();
         setup_ble();
 }
 
 void loop()
 {
-        // get ADXL345 data
-        adxl.readXYZ(&x, &y, &z);
+        int x = 0;
+        int y = 0;
+        int z = 0;
+        int scalar = 0;
+        char msg[128];
+
+        long wait;
+        long t = micros();
+
+        read_acc(&x, &y, &z);
 
         scalar = SCALAR(x, y, z);
         sprintf(msg, "Ax, Ay, Az, A: %d, %d, %d, %d", x, y, z, scalar);
@@ -178,6 +208,9 @@ void loop()
             oldDeviceConnected = deviceConnected;
         }
 
-        delay(DELAY);
+        wait = DELAY * 1000 - (micros() - t);
+
+        if (wait > 0)
+                delayMicroseconds(wait);
 
 }
