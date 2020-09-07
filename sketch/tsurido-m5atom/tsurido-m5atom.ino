@@ -9,7 +9,7 @@
 //  Arduino IDE: Arduino-1.8.13
 //  Author:  Hideto Manjo     
 //  Date:    Aug 9, 2020
-//  Version: v0.1
+//  Version: v0.2
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,13 +34,22 @@
 #define SERVICE_UUID        "8da64251-bc69-4312-9c78-cbfc45cd56ff"
 #define CHARACTERISTIC_UUID "deb894ea-987c-4339-ab49-2393bcc6ad26"
 #define DEVICE_NAME         "Tsurido"
-#define LCD_ROTATION        0      // 90 * num (degree) [Counterclockwise]
+
+
+// device select
+#define USE_MPU6886         true   // M5Atom Matrix Only
+
+// basic
 #define DELAY               50     // microseconds
 #define SERIAL              true   // With/without serial communication
 #define BAUDRATE            115200 // Serial communication baud rate
 
-#define USE_MPU6886         false   // M5Atom Matrix Only
+// warning
+#define WARN                true   // Enable warning LED
+#define BUFFER_SIZE         200    // Buffer size for statics
 
+// LED
+#define LED_BRIGHTNESS      10     // Brightness Max is 20
 #define COLOR_NEON_RED      {0xFE, 0x00, 0x00}
 #define COLOR_NEON_GREEN    {0x0B, 0xFF, 0x01}
 #define COLOR_NEON_BLUE     {0x01, 0x1E, 0xFE}
@@ -63,6 +72,12 @@ uint8_t color_bluetooh[3] = COLOR_NEON_BLUE;
 
 uint8_t DisBuff[2 + 25 * 3];
 
+// online algorism
+int K = 0;
+int n = 0;
+double Ex = 0;
+double Ex2 = 0;
+
 void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
 {       
         DisBuff[0] = 0x05;
@@ -78,6 +93,80 @@ void changeColor(uint8_t *rgb)
 {
         setBuff(*rgb, *(rgb + 1), *(rgb + 2));
         M5.dis.displaybuff(DisBuff);
+}
+
+void add_variable(int* x)
+{
+        if (n == 0)
+                K = *x;
+        n += 1;
+        Ex += *x - K;
+        Ex2 += (*x - K) * (*x - K);
+}
+
+void remove_variable(int* x)
+{
+        n -= 1;
+        Ex -= (*x - K);
+        Ex2 -= (*x - K) * (*x - K);
+}
+double get_mean(void)
+{
+        return K + Ex / n;
+}
+
+double get_variance(void)
+{
+        return (Ex2 - (Ex * Ex) / n) / n;
+}
+
+void get_stat(int* x, double* mean, double* std)
+{
+        static int pos = 0;
+        static int data[BUFFER_SIZE] = {};
+
+        if(pos == BUFFER_SIZE)
+                pos = 0;
+
+        if(n == BUFFER_SIZE)
+                remove_variable(&data[pos]);
+
+        data[pos] = *x;
+        add_variable(&data[pos]);
+
+        *mean = get_mean();
+        *std = sqrt(get_variance());
+
+        pos++;
+}
+
+bool warn(int* val, double* standard) {
+        static long lastring = 0;
+        static bool ring = false;
+        static bool state = false;
+
+        if (micros() - lastring > 2000 * 1000) { 
+                if (*val > 5 * (*standard)) {
+                        lastring = micros();
+                        ring = true;
+                }else{
+                        ring = false; 
+                }
+        }
+
+        if (ring) {
+            if (state) {
+                M5.dis.setBrightness(0);
+            } else {
+                M5.dis.setBrightness(LED_BRIGHTNESS);
+            }
+            state = !state;
+            return true;
+        }
+        
+        M5.dis.setBrightness(LED_BRIGHTNESS);
+
+        return false;
 }
 
 class MyServerCallbacks: public BLEServerCallbacks
@@ -153,6 +242,7 @@ void setup()
 {
         M5.begin(false, false, true);
         setBuff(0x88, 0x88, 0x88);
+        M5.dis.setBrightness(LED_BRIGHTNESS);
         M5.dis.displaybuff(DisBuff);
         // Check i2c pin number SDA=26, SDL=32
         Wire.begin(26, 32);
@@ -169,6 +259,10 @@ void loop()
         int z = 0;
         int scalar = 0;
         char msg[128];
+
+        int diff = 0;
+        double mean = 0.0;
+        double standard = 0.0;
 
         long wait;
         long t = micros();
@@ -190,7 +284,12 @@ void loop()
                           
         
         if (SERIAL)
-            Serial.println(msg);
+                Serial.println(msg);
+
+        if (WARN)
+                get_stat(&scalar, &mean, &standard);
+                diff = (int) abs(scalar - mean);
+                warn(&diff, &standard);
 
         if (deviceConnected) {
                 pCharacteristic->setValue(msg);
