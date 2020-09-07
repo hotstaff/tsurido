@@ -35,6 +35,9 @@
 #define CHARACTERISTIC_UUID "deb894ea-987c-4339-ab49-2393bcc6ad26"
 #define DEVICE_NAME         "Tsurido"
 
+// device select
+#define USE_MPU6886         true   // Use internal IMU unit as acc sensor
+
 // basic
 #define LCD_ROTATION        0      // 90 * num (degree) [Counterclockwise]
 #define SCREENBREATH        12     // LCD brightness (max 12)
@@ -92,80 +95,6 @@ void changeCPUFreq(int freq)
     }
 }
 
-void updateStateBLE()
-{   
-        if (!lowEnergyMode) {
-                if (deviceConnected) {
-                        M5.Lcd.setCursor(M5.Lcd.width() - 22, OFFSET_MENU);
-                        M5.Lcd.setTextColor(WHITE, BLUE);
-                        M5.Lcd.println("BLE");
-                } else {
-                        M5.Lcd.setCursor(M5.Lcd.width() - 22, OFFSET_MENU);
-                        M5.Lcd.setTextColor(WHITE, BLACK);
-                        M5.Lcd.println("   ");
-                }
-        }
-}
-
-void updateStateBATT()
-{
-        if (!lowEnergyMode) {
-                M5.Lcd.setCursor(0, OFFSET_MENU);
-                if (batt_charge > 33) {
-                    M5.Lcd.setTextColor(WHITE, BLACK);
-                } else {
-                    M5.Lcd.setTextColor(RED, BLACK);
-                }
-                M5.Lcd.printf("%d%%", batt_charge);
-        }
-}
-
-class MyServerCallbacks: public BLEServerCallbacks
-{
-        void onConnect(BLEServer* pServer)
-        {       
-                deviceConnected = true;
-                updateStateBLE();
-        }
-
-        void onDisconnect(BLEServer* pServer)
-        {       
-                deviceConnected = false;
-                updateStateBLE();
-        }
-};
-
-void setup_adxl345()
-{
-        adxl.powerOn();
-}
-
-void setup_ble()
-{       
-        BLEDevice::init(DEVICE_NAME);
-        BLEServer *pServer = BLEDevice::createServer();
-        pServer->setCallbacks(new MyServerCallbacks());
-
-        BLEService *pService = pServer->createService(SERVICE_UUID);
-
-        pCharacteristic = pService->createCharacteristic(
-                CHARACTERISTIC_UUID,
-                BLECharacteristic::PROPERTY_READ |
-                BLECharacteristic::PROPERTY_WRITE |
-                BLECharacteristic::PROPERTY_NOTIFY |
-                BLECharacteristic::PROPERTY_INDICATE
-                          );
-        pCharacteristic->addDescriptor(new BLE2902());
-
-        pService->start();
-
-        BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-        pAdvertising->addServiceUUID(SERVICE_UUID);
-        pAdvertising->setScanResponse(false);
-        pAdvertising->setMinPreferred(0x0);
-        BLEDevice::startAdvertising();
-}
-
 void add_variable(int* x)
 {
         if (n == 0)
@@ -209,6 +138,106 @@ void get_stat(int* x, double* mean, double* std)
         *std = sqrt(get_variance());
 
         pos++;
+}
+
+
+void updateStateBLE()
+{   
+        if (!lowEnergyMode) {
+                if (deviceConnected) {
+                        M5.Lcd.setCursor(M5.Lcd.width() - 22, OFFSET_MENU);
+                        M5.Lcd.setTextColor(WHITE, BLUE);
+                        M5.Lcd.println("BLE");
+                } else {
+                        M5.Lcd.setCursor(M5.Lcd.width() - 22, OFFSET_MENU);
+                        M5.Lcd.setTextColor(WHITE, BLACK);
+                        M5.Lcd.println("   ");
+                }
+        }
+}
+
+void updateStateBATT()
+{
+        if (!lowEnergyMode) {
+                M5.Lcd.setCursor(0, OFFSET_MENU);
+                if (batt_charge > 33) {
+                    M5.Lcd.setTextColor(WHITE, BLACK);
+                } else {
+                    M5.Lcd.setTextColor(RED, BLACK);
+                }
+                M5.Lcd.printf("%d%%", batt_charge);
+        }
+}
+
+class MyServerCallbacks: public BLEServerCallbacks
+{
+        void onConnect(BLEServer* pServer)
+        {       
+                deviceConnected = true;
+                updateStateBLE();
+        }
+
+        void onDisconnect(BLEServer* pServer)
+        {       
+                deviceConnected = false;
+                updateStateBLE();
+        }
+};
+
+
+void setup_adxl345()
+{
+        adxl.powerOn();
+}
+
+void setup_acc()
+{
+        if (USE_MPU6886) {
+                M5.IMU.Init();
+                return;
+        }
+        
+        setup_adxl345();
+}    
+
+void setup_ble()
+{       
+        BLEDevice::init(DEVICE_NAME);
+        BLEServer *pServer = BLEDevice::createServer();
+        pServer->setCallbacks(new MyServerCallbacks());
+
+        BLEService *pService = pServer->createService(SERVICE_UUID);
+
+        pCharacteristic = pService->createCharacteristic(
+                CHARACTERISTIC_UUID,
+                BLECharacteristic::PROPERTY_READ |
+                BLECharacteristic::PROPERTY_WRITE |
+                BLECharacteristic::PROPERTY_NOTIFY |
+                BLECharacteristic::PROPERTY_INDICATE
+                          );
+        pCharacteristic->addDescriptor(new BLE2902());
+
+        pService->start();
+
+        BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+        pAdvertising->addServiceUUID(SERVICE_UUID);
+        pAdvertising->setScanResponse(false);
+        pAdvertising->setMinPreferred(0x0);
+        BLEDevice::startAdvertising();
+}
+
+void read_acc(int* x, int* y, int* z)
+{       
+        if (USE_MPU6886) {
+                int16_t ax, ay, az;
+                M5.IMU.getAccelAdc(&ax, &ay, &az);
+                *x = (int) ax;
+                *y = (int) ay;
+                *z = (int) az;
+                return;
+        }
+
+        adxl.readXYZ(x, y, z);
 }
 
 void plot(int* val, double* standard)
@@ -299,7 +328,7 @@ void setup()
 
         Serial.begin(BAUDRATE);
         Serial.flush();
-        setup_adxl345();
+        setup_acc();
         setup_ble();
 
         changeCPUFreq(CPU_FREQ);
