@@ -4,15 +4,19 @@
 
 # 機能
 
-竿先に加速度センサー(ADXL345)を取り付けて魚のアタリを検知します。加速度の統計的外れ値を検出してアタリを判定します。
-
-## ハードウェア最小構成
-
-![最小構成](doc/minimum.png)
-
-ADXL345とM5StickCをつなげたものを使います。
+竿先の加速度を測定して魚のアタリを検知します。加速度の統計的外れ値を検出してアタリを判定します。
 
 # DEMO
+
+## ハードウェア構成
+
+M5Stick・M5Atomに内臓のIMUユニットMPU6886もしくはGrove接続加速度センサーモジュールADXL345をつなげたものを使用します。
+
+- 構成例（ADXL345とM5StickC）
+
+![ADXL345とM5StickC](doc/minimum.png)
+
+## クライアント
 
 ![センス](sense.png)
 
@@ -22,11 +26,27 @@ ADXL345とM5StickCをつなげたものを使います。
 
 ## センサー側
 
-* M5StickCもしくはM5AtomLite
+* M5StickCもしくはM5Atom(Lite, Matrix)
 
 * ADXL345(grove接続)
 
 ![ADXL345](doc/adxl345.png)
+
+内蔵のIMUユニットに対応したため、ADXL345は必須ではなくなりました。
+対応表については下記を参照してください。
+
+
+### ハードウェア構成別対応表
+
+現在のところスケッチで対応している構成は以下のとおりです。すべての構成でbluetooth経由で接続及びパソコンを使って当たり判定・プロットができます。
+
+| 構成 | スケッチ名 | プロット | スタンドアローンアタリ判定 | 省電力モード | バッテリー動作 | 備考
+| ---- | ---- | :----: | :----: | :----: | :----: | ---- |
+| M5StickC単体 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_MPU6886 = trueへ設定が必要 |
+| M5StickCとADXL345 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_MPU6886 = falseへ設定が必要 |
+| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_MPU6886 = trueへ設定が必要 |
+| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_MPU6886 = falseへ設定が必要 |
+| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_MPU6886 = falseへ設定が必要 |
 
 ## クライアント側
 

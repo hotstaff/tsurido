@@ -19,6 +19,7 @@ import argparse
 from datetime import datetime
 import numpy as np
 
+
 from matplotlib import pyplot as plt
 from matplotlib import _pylab_helpers
 
@@ -55,9 +56,41 @@ class SoundPlayer:
             playback.wait_done()
 
 
+class SerialParser:
+    """Serial Parser"""
+    def __init__(self, data):
+        self.labels, self.values = self._parse(data)
+
+    def __getitem__(self, items):
+        if isinstance(items, (tuple, list)):
+            return [self.values[self.labels.index(item)] for item in items]
+
+        if isinstance(items, str):
+            return self.values[self.labels.index(items)]
+
+        if isinstance(items, (int, slice)):
+            return self.values[items]
+
+        raise NotImplementedError()
+
+    @classmethod
+    def _parse(cls, data):
+        labels, values, = str(data).split(":")
+        labels = [label.strip() for label in labels.split(',')]
+        values = [value.strip() for value in values.split(',')]
+
+        # Make the lists of labels and values the same length, fill in the blanks
+        if len(labels) > len(values):
+            labels = labels[0:len(values)]
+        else:
+            labels += (len(values) - len(labels)) * [""]
+
+        return labels, values
+
+
 class Plotter:
     """Tsurido Plotter module"""
-    def __init__(self, interval=1, width=200, pause=0.001, sigma=(5, 7),
+    def __init__(self, interval=1, width=200, pause=0.001, sigma=(5, 10),
                  angle=True, xlabel=False, ylabel=True, logger=False,
                  title="Tsurido Plotter"):
         # define
@@ -107,20 +140,6 @@ class Plotter:
             self.li2, = self.ax2.plot(self.t, self.tip_angle,
                                       label="Rod angle", color="r")
             self.ax2.set_ylabel(self.li2.get_label())
-
-    @staticmethod
-    def _parse(data):
-        labels, values, = str(data).split(":")
-        labels = [label.strip() for label in labels.split(',')]
-        values = [value.strip() for value in values.split(',')]
-
-        # Make the lists of labels and values the same length, fill in the blanks
-        if len(labels) > len(values):
-            labels = labels[0:len(values)]
-        else:
-            labels += (len(values) - len(labels)) * [""]
-
-        return labels, values
 
     @staticmethod
     def _get_angle(ax, ay, az):
@@ -210,14 +229,7 @@ class Plotter:
             self.closed = True
             return
 
-        # Parse
-        labels, values = self._parse(data)
-
-        # Sort
-        values = [values[labels.index(self.__indexes[0])],
-                  values[labels.index(self.__indexes[1])],
-                  values[labels.index(self.__indexes[2])],
-                  values[labels.index(self.__indexes[3])]]
+        values = SerialParser(data)[self.__indexes]
 
         # Store value as new values
         self._store_values(values)
