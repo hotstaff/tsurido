@@ -319,6 +319,14 @@ def main():
 
 def parser():
     """Paser"""
+
+    def check_positive(value):
+        ivalue = int(value)
+        if ivalue <= 0:
+            raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+        return ivalue
+
+
     usage = f'Usage: python {__file__} DEVICE_NAME [OPTIONS] [--keepalive] [--reset][--help]'
     formatter_class = argparse.ArgumentDefaultsHelpFormatter
     argparser = argparse.ArgumentParser(usage=usage,
@@ -331,14 +339,21 @@ def parser():
                            help='Enter the device name')
 
     argparser.add_argument('-i', '--interval',
-                           type=int,
+                           type=check_positive,
                            default=4,
                            help='Plot interval Ex: 1 = realtime, 2 = only even times')
 
     argparser.add_argument('-w', '--width',
-                           type=int,
+                           type=check_positive,
                            default=200,
                            help='Plot width')
+
+    argparser.add_argument('-s', '--sigma',
+                           type=check_positive,
+                           default=[5, 10],
+                           nargs=2,
+                           metavar=('warn', 'over range'),
+                           help='specify warn/OR range')
 
     argparser.add_argument('-na', '--noangle',
                            action='store_false',
@@ -362,10 +377,11 @@ def parser():
 if __name__ == '__main__':
     ARGS = parser()
     BLE = Adafruit_BluefruitLE.get_provider()
-    PLOTTER = Plotter(interval=ARGS.interval if ARGS.interval > 0 else 1,
-                      width=ARGS.width if ARGS.width > 1 else 200,
+    PLOTTER = Plotter(interval=ARGS.interval,
+                      width=ARGS.width,
                       angle=ARGS.noangle,
                       logger=ARGS.logging,
+                      sigma=ARGS.sigma if ARGS.sigma[1] > ARGS.sigma[0] else [5, 10],
                       title=f"Tsurido Plotter - {ARGS.DEVICE_NAME}")
     BLE.initialize()
     BLE.run_mainloop_with(main)
