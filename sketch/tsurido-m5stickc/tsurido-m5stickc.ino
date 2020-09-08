@@ -90,9 +90,9 @@ double Ex2 = 0;
 
 void changeCPUFreq(int freq)
 {
-    while(!setCpuFrequencyMhz(freq)) {
-    ;
-    }
+        while(!setCpuFrequencyMhz(freq)) {
+        ;
+        }
 }
 
 void add_variable(int* x)
@@ -295,8 +295,8 @@ bool warn(int* val, double* standard) {
         }
 
         if (ring) {
-            digitalWrite(GPIO_NUM_10, !digitalRead(GPIO_NUM_10));
-            return true;
+                digitalWrite(GPIO_NUM_10, !digitalRead(GPIO_NUM_10));
+                return true;
         }
 
         digitalWrite(GPIO_NUM_10, HIGH);
