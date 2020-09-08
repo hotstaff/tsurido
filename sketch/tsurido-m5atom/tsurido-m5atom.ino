@@ -25,6 +25,7 @@
 //
 /*******************************************************************************/
 #include <M5Atom.h>
+#include <FastLED.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
@@ -37,23 +38,24 @@
 
 
 // device select
-#define USE_MPU6886         true   // M5Atom Matrix Only
+#define USE_MPU6886         false      // M5Atom Matrix Only
 
 // basic
-#define DELAY               50     // microseconds
-#define SERIAL              true   // With/without serial communication
-#define BAUDRATE            115200 // Serial communication baud rate
+#define DELAY               50        // microseconds
+#define SERIAL              true      // With/without serial communication
+#define BAUDRATE            115200    // Serial communication baud rate
 
 // warning
-#define WARN                true   // Enable warning LED
-#define BUFFER_SIZE         200    // Buffer size for statics
+#define WARN                true      // Enable warning LED
+#define BUFFER_SIZE         200       // Buffer size for statics
 
 // LED
-#define LED_BRIGHTNESS      10     // Brightness Max is 20
-#define COLOR_NEON_RED      {0xFE, 0x00, 0x00}
-#define COLOR_NEON_GREEN    {0x0B, 0xFF, 0x01}
-#define COLOR_NEON_BLUE     {0x01, 0x1E, 0xFE}
-#define COLOR_NEON_YELLOW   {0xFD, 0xFE, 0x02}
+#define LED_BRIGHTNESS      10        // Brightness Max is 20
+
+#define COLOR_NEON_RED      0x00FF00  // GRB
+#define COLOR_NEON_GREEN    0xFF0B01  // GRB
+#define COLOR_NEON_BLUE     0x1E01FE  // GRB
+#define COLOR_NEON_YELLOW   0xFEFD02  // GRB
 
 #define SCALAR(x, y, z)     sqrt(x*x + y*y + z*z)
 
@@ -65,12 +67,10 @@ ADXL345 adxl;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-uint8_t color_error[3] = COLOR_NEON_RED;
-uint8_t color_warning[3] = COLOR_NEON_YELLOW;
-uint8_t color_success[3] = COLOR_NEON_GREEN;
-uint8_t color_bluetooh[3] = COLOR_NEON_BLUE;
-
-uint8_t DisBuff[2 + 25 * 3];
+CRGB color_error = CRGB(COLOR_NEON_RED);
+CRGB color_warning = CRGB(COLOR_NEON_YELLOW);
+CRGB color_success = CRGB(COLOR_NEON_GREEN);
+CRGB color_bluetooh = CRGB(COLOR_NEON_BLUE);
 
 // online algorism
 int K = 0;
@@ -78,21 +78,15 @@ int n = 0;
 double Ex = 0;
 double Ex2 = 0;
 
-void setBuff(uint8_t Rdata, uint8_t Gdata, uint8_t Bdata)
+void fillColor(CRGB color)
 {       
-        DisBuff[0] = 0x05;
-        DisBuff[1] = 0x05;
-        for (int i = 0; i < 25; i++) {
-                DisBuff[(3 * i) + 2] = Rdata;
-                DisBuff[(3 * i) + 3] = Gdata;
-                DisBuff[(3 * i) + 4] = Bdata;
-        }  
-}
-
-void changeColor(uint8_t *rgb)
-{
-        setBuff(*rgb, *(rgb + 1), *(rgb + 2));
-        M5.dis.displaybuff(DisBuff);
+        static CRGB lastcolor = CRGB(0xFFFFFF);
+        if (color != lastcolor) {
+                for(int i = 0; i < 25; i++){
+                        M5.dis.drawpix(i, color);
+                }
+                lastcolor = color;
+        }
 }
 
 void add_variable(int* x)
@@ -241,10 +235,8 @@ void read_acc(int* x, int* y, int* z)
 void setup()
 {
         M5.begin(false, false, true);
-        setBuff(0x88, 0x88, 0x88);
+        fillColor(CRGB(0x888888));
         M5.dis.setBrightness(LED_BRIGHTNESS);
-        M5.dis.displaybuff(DisBuff);
-        // Check i2c pin number SDA=26, SDL=32
         Wire.begin(26, 32);
         Serial.begin(BAUDRATE);
         Serial.flush();
@@ -274,12 +266,12 @@ void loop()
 
         if (scalar != 0) {
                 if (deviceConnected) {
-                        changeColor(color_bluetooh);
+                        fillColor(color_bluetooh);
                 } else {
-                        changeColor(color_success);
+                        fillColor(color_success);
                 }
         } else {
-                changeColor(color_error);
+                fillColor(color_error);
         }
                           
         
@@ -297,7 +289,7 @@ void loop()
         }
 
         if (!deviceConnected && oldDeviceConnected) {
-            changeColor(color_warning);
+            fillColor(color_warning);
             delay(500);
             pServer->startAdvertising();
             oldDeviceConnected = deviceConnected;
