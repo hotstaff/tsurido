@@ -12,13 +12,13 @@ Copyright 2020 Hideto Manjo
 Licence: LGPL
 """
 
+
 import time
 import uuid
 import csv
 import argparse
 from datetime import datetime
 import numpy as np
-
 
 from matplotlib import pyplot as plt
 from matplotlib import _pylab_helpers
@@ -319,7 +319,7 @@ def main():
 
 def parser():
     """Paser"""
-    usage = f'Usage: python {__file__} DEVICE_NAME [--keepalive] [--help]'
+    usage = f'Usage: python {__file__} DEVICE_NAME [OPTIONS] [--keepalive] [--reset][--help]'
     formatter_class = argparse.ArgumentDefaultsHelpFormatter
     argparser = argparse.ArgumentParser(usage=usage,
                                         formatter_class=formatter_class)
@@ -339,6 +339,10 @@ def parser():
                            type=int,
                            default=200,
                            help='Plot width')
+
+    argparser.add_argument('-na', '--noangle',
+                           action='store_false',
+                           help='No angle plot')
 
     argparser.add_argument('--logging',
                            action='store_true',
@@ -360,7 +364,7 @@ if __name__ == '__main__':
     BLE = Adafruit_BluefruitLE.get_provider()
     PLOTTER = Plotter(interval=ARGS.interval if ARGS.interval > 0 else 1,
                       width=ARGS.width if ARGS.width > 1 else 200,
-                      angle=True,
+                      angle=ARGS.noangle,
                       logger=ARGS.logging,
                       title=f"Tsurido Plotter - {ARGS.DEVICE_NAME}")
     BLE.initialize()
