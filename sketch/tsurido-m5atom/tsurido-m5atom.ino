@@ -36,9 +36,8 @@
 #define CHARACTERISTIC_UUID "deb894ea-987c-4339-ab49-2393bcc6ad26"
 #define DEVICE_NAME         "Tsurido"
 
-
 // device select
-#define USE_MPU6886         false      // M5Atom Matrix Only
+#define USE_MPU6886         false     // M5Atom Matrix Only
 
 // basic
 #define DELAY               50        // microseconds
@@ -59,6 +58,12 @@
 
 #define SCALAR(x, y, z)     sqrt(x*x + y*y + z*z)
 
+
+CRGB color_error = CRGB(COLOR_NEON_RED);
+CRGB color_warning = CRGB(COLOR_NEON_YELLOW);
+CRGB color_success = CRGB(COLOR_NEON_GREEN);
+CRGB color_bluetooh = CRGB(COLOR_NEON_BLUE);
+
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
 ADXL345 adxl;
@@ -66,11 +71,6 @@ ADXL345 adxl;
 // FLAGS
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
-
-CRGB color_error = CRGB(COLOR_NEON_RED);
-CRGB color_warning = CRGB(COLOR_NEON_YELLOW);
-CRGB color_success = CRGB(COLOR_NEON_GREEN);
-CRGB color_bluetooh = CRGB(COLOR_NEON_BLUE);
 
 // online algorism
 int K = 0;
@@ -149,13 +149,13 @@ bool warn(int* val, double* standard) {
         }
 
         if (ring) {
-            if (state) {
-                M5.dis.setBrightness(0);
-            } else {
-                M5.dis.setBrightness(LED_BRIGHTNESS);
-            }
-            state = !state;
-            return true;
+                if (state) {
+                        M5.dis.setBrightness(0);
+                } else {
+                        M5.dis.setBrightness(LED_BRIGHTNESS);
+                }
+                state = !state;
+                return true;
         }
         
         M5.dis.setBrightness(LED_BRIGHTNESS);
@@ -289,14 +289,14 @@ void loop()
         }
 
         if (!deviceConnected && oldDeviceConnected) {
-            fillColor(color_warning);
-            delay(500);
-            pServer->startAdvertising();
-            oldDeviceConnected = deviceConnected;
+                fillColor(color_warning);
+                delay(500);
+                pServer->startAdvertising();
+                oldDeviceConnected = deviceConnected;
         }
 
         if (deviceConnected && !oldDeviceConnected) {
-            oldDeviceConnected = deviceConnected;
+                oldDeviceConnected = deviceConnected;
         }
 
         wait = DELAY * 1000 - (micros() - t);
