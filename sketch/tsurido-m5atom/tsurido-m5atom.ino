@@ -40,7 +40,7 @@
 #define USE_MPU6886         false     // M5Atom Matrix Only
 
 // basic
-#define DELAY               50        // microseconds
+#define DELAY               50        // milliseconds
 #define SERIAL              true      // With/without serial communication
 #define BAUDRATE            115200    // Serial communication baud rate
 
