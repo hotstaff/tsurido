@@ -272,8 +272,7 @@ void loop()
                 }
         } else {
                 fillColor(color_error);
-        }
-                          
+        }                 
         
         if (SERIAL)
                 Serial.println(msg);

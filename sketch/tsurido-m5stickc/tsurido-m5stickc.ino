@@ -184,7 +184,6 @@ class MyServerCallbacks: public BLEServerCallbacks
         }
 };
 
-
 void setup_adxl345()
 {
         adxl.powerOn();
