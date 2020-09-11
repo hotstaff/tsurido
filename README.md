@@ -1,10 +1,14 @@
 # Tsurido - M5StickCで投げ釣りの当たり判定をする
 
+**M5Stack for surf fishing**
+
 [![Github license](https://img.shields.io/github/license/hotstaff/tsurido)](https://github.com/hotstaff/tsurido/)
+
 
 # 機能
 
 竿先の加速度を測定して魚のアタリを検知します。加速度の統計的外れ値を検出してアタリを判定します。
+
 
 # DEMO
 
@@ -22,36 +26,41 @@ M5Stick・M5Atomに内臓のIMUユニットMPU6886/SH200QもしくはGrove接続
 
 加速度と竿先の角度をモニタリングします。黄色い線は警報のしきい値を表しています。
 
+
 # 必須条件
 
 ## センサー側
 
 * M5StickCもしくはM5Atom(Lite, Matrix)
 
-* ADXL345(grove接続)
+* ADXL345(grove接続) 推奨
 
 ![ADXL345](doc/adxl345.png)
 
 内蔵のIMUユニットに対応したため、ADXL345は必須ではなくなりました。
-対応表については下記を参照してください。
 
+対応表については下記を参照してください。
 
 ### ハードウェア構成別対応表
 
 現在のところスケッチで対応している構成は以下のとおりです。すべての構成でbluetooth経由で接続及びパソコンを使って当たり判定・プロットができます。
 
-| 構成 | スケッチ名 | プロット | スタンドアローンアタリ判定 | 省電力モード | バッテリー動作 | 備考
-| ---- | ---- | :----: | :----: | :----: | :----: | ---- |
-| M5StickC単体 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_INTERNAL_IMU = trueへ設定が必要 |
-| M5StickCとADXL345 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_INTERNAL_IMU = falseへ設定が必要 |
-| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_INTERNAL_IMU = trueへ設定が必要 |
-| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_INTERNAL_IMU = falseへ設定が必要 |
-| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_INTERNAL_IMU = falseへ設定が必要 |
+| 構成 | スケッチ名 | プロット | スタンドアローンアタリ判定 | 省電力モード | バッテリー動作 | USE_INTERNAL_IMUの設定 |
+| ---- | ---- | :----: | :----: | :----: | :----: | :----: |
+| M5StickC単体 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | trueに設定 |
+| M5StickCとADXL345 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | falseに設定 |
+| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | trueに設定 |
+| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | falseに設定 |
+| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | falseに設定 |
+
+`#define USE_INTERNAL_IMU`を`true`に設定することで内蔵のIMUユニットを加速度センサーとして利用できます。
+
 
 ## クライアント側
 
 * Python3が動く環境
 * Bluetoothアダプターが使えること
+
 
 # インストール
 
@@ -101,6 +110,7 @@ sudo pip install numpy matplotlib pyaudio simpleaudio pydub
 
 これで使う準備ができました。
 
+
 # 使い方
 
 ## スケッチの転送
@@ -142,7 +152,7 @@ python3 client.py DEVICE_NAME -i 2 -w 200 -s 5 10 -na
 - `-i`: プロット間隔の設定（default 4)　意味は`N`回に１回描画する。数を大きくするとプロット負荷を抑えられます。プロットの内容は変わりません。
 - `-w`: プロットの幅の設定（default 200）プロットの幅を設定します。平均値及び標準偏差の計算元データも同じ幅になります。
 - `-s`: 当たり判定の感度設定　(default 5 10) 警告のしきい値及びグラフレンジを設定します。この場合は`5σ`で警告音、`10σ`がグラフの縦軸上限になります。
-- `-na`: 竿先の角度の非表示 (defalut `true`)
+- `-na`: 竿先の角度の非表示 (defalut `false`)
 
 ### 接続のリセット
 
@@ -174,6 +184,7 @@ python3 client.py DEVICE_NAME --keepalive
 - コンテンツとして提供する全ての文章、画像、音声情報について、内容の合法性・正確性・安全性等、あらゆる点において保証しません。
 - リンクをしている外部サイトについては、何ら保証しません。
 - 事前の予告無く、コンテンツの提供を中止する可能性があります。
+
 
 # 作者
 
