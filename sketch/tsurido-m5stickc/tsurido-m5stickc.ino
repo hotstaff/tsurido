@@ -261,13 +261,13 @@ void plot(int* val, double* standard)
                 updateStateBLE();
                 updateStateBATT();
 
-                sigma = map((int)5 * (*standard), 0, top, height, 0);
+                sigma = map((int)TH_WARN * (*standard), 0, top, height, 0);
                 M5.Lcd.drawLine(X0, sigma, width + X0, sigma, YELLOW);
         }
 
         M5.Lcd.setCursor(0, OFFSET_MAIN);
         M5.Lcd.setTextColor(YELLOW, BLACK);
-        M5.Lcd.printf("Warn %4.0lf ", 5 * (*standard));
+        M5.Lcd.printf("Warn %4.0lf ", TH_WARN * (*standard));
         M5.Lcd.setCursor(0, OFFSET_MAIN + 10);
         M5.Lcd.setTextColor(GREEN, BLACK);
         M5.Lcd.printf("Value%4d ", *val);
@@ -279,7 +279,7 @@ bool warn(int* val, double* standard) {
         static bool ring = false;
 
         if (micros() - lastring > 2000 * 1000) { 
-                if (*val > 5 * (*standard)) {
+                if (*val > TH_WARN * (*standard)) {
                         lastring = micros();
                         ring = true;
                 }else{

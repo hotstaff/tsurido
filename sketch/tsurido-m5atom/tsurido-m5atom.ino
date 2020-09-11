@@ -47,6 +47,7 @@
 // warning
 #define WARN                true      // Enable warning LED
 #define BUFFER_SIZE         200       // Buffer size for statics
+#define TH_WARN             5         // Warning threshold(sigma)
 
 // LED
 #define LED_BRIGHTNESS      10        // Brightness Max is 20
@@ -140,7 +141,7 @@ bool warn(int* val, double* standard) {
         static bool state = false;
 
         if (micros() - lastring > 2000 * 1000) { 
-                if (*val > 5 * (*standard)) {
+                if (*val > TH_WARN * (*standard)) {
                         lastring = micros();
                         ring = true;
                 }else{
