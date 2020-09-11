@@ -37,7 +37,7 @@
 #define DEVICE_NAME         "Tsurido"
 
 // device select
-#define USE_MPU6886         false     // M5Atom Matrix Only
+#define USE_INTERNAL_IMU         false     // M5Atom Matrix Only
 
 // basic
 #define DELAY               50        // milliseconds
@@ -177,19 +177,14 @@ class MyServerCallbacks: public BLEServerCallbacks
         }
 };
 
-void setup_adxl345()
-{
-        adxl.powerOn();
-}
-
 void setup_acc()
 {
-        if (USE_MPU6886) {
+        if (USE_INTERNAL_IMU) {
                 M5.IMU.Init();
                 return;
         }
         
-        setup_adxl345();
+        adxl.powerOn();
 }    
 
 void setup_ble()
@@ -220,7 +215,7 @@ void setup_ble()
 
 void read_acc(int* x, int* y, int* z)
 {       
-        if (USE_MPU6886) {
+        if (USE_INTERNAL_IMU) {
                 int16_t ax, ay, az;
                 M5.IMU.getAccelAdc(&ax, &ay, &az);
                 *x = (int) ax;
@@ -259,10 +254,12 @@ void loop()
         long wait;
         long t = micros();
 
+
         read_acc(&x, &y, &z);
 
         scalar = SCALAR(x, y, z);
         sprintf(msg, "Ax, Ay, Az, A: %d, %d, %d, %d", x, y, z, scalar);
+
 
         if (scalar != 0) {
                 if (deviceConnected) {

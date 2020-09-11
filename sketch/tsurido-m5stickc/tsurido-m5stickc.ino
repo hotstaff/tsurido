@@ -36,7 +36,7 @@
 #define DEVICE_NAME         "Tsurido"
 
 // device select
-#define USE_MPU6886         true   // Use internal IMU unit as acc sensor
+#define USE_INTERNAL_IMU    true   // Use internal IMU unit as acc sensor
 
 // basic
 #define LCD_ROTATION        0      // 90 * num (degree) [Counterclockwise]
@@ -140,7 +140,6 @@ void get_stat(int* x, double* mean, double* std)
         pos++;
 }
 
-
 void updateStateBLE()
 {   
         if (!lowEnergyMode) {
@@ -184,19 +183,14 @@ class MyServerCallbacks: public BLEServerCallbacks
         }
 };
 
-void setup_adxl345()
-{
-        adxl.powerOn();
-}
-
 void setup_acc()
 {
-        if (USE_MPU6886) {
+        if (USE_INTERNAL_IMU) {
                 M5.IMU.Init();
                 return;
         }
         
-        setup_adxl345();
+        adxl.powerOn();
 }    
 
 void setup_ble()
@@ -227,7 +221,7 @@ void setup_ble()
 
 void read_acc(int* x, int* y, int* z)
 {       
-        if (USE_MPU6886) {
+        if (USE_INTERNAL_IMU) {
                 int16_t ax, ay, az;
                 M5.IMU.getAccelAdc(&ax, &ay, &az);
                 *x = (int) ax;
@@ -447,7 +441,6 @@ void loop()
         M5.update();
 
         wait = DELAY * 1000 - (micros() - t);
-
         if (wait > 0)
                 delayMicroseconds(wait);
 }

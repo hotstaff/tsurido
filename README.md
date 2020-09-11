@@ -10,7 +10,7 @@
 
 ## ハードウェア構成
 
-M5Stick・M5Atomに内臓のIMUユニットMPU6886もしくはGrove接続加速度センサーモジュールADXL345をつなげたものを使用します。
+M5Stick・M5Atomに内臓のIMUユニットMPU6886/SH200QもしくはGrove接続加速度センサーモジュールADXL345をつなげたものを使用します。
 
 - 構成例（ADXL345とM5StickC）
 
@@ -42,11 +42,11 @@ M5Stick・M5Atomに内臓のIMUユニットMPU6886もしくはGrove接続加速�
 
 | 構成 | スケッチ名 | プロット | スタンドアローンアタリ判定 | 省電力モード | バッテリー動作 | 備考
 | ---- | ---- | :----: | :----: | :----: | :----: | ---- |
-| M5StickC単体 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_MPU6886 = trueへ設定が必要 |
-| M5StickCとADXL345 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_MPU6886 = falseへ設定が必要 |
-| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_MPU6886 = trueへ設定が必要 |
-| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_MPU6886 = falseへ設定が必要 |
-| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_MPU6886 = falseへ設定が必要 |
+| M5StickC単体 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_INTERNAL_IMU = trueへ設定が必要 |
+| M5StickCとADXL345 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | USE_INTERNAL_IMU = falseへ設定が必要 |
+| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_INTERNAL_IMU = trueへ設定が必要 |
+| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_INTERNAL_IMU = falseへ設定が必要 |
+| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | USE_INTERNAL_IMU = falseへ設定が必要 |
 
 ## クライアント側
 

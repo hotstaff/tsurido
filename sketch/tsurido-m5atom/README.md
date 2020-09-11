@@ -2,7 +2,7 @@
 
 アタリがあるとLEDが点滅して知らせます。
 M5AtomMatrixの場合はMPU6886が内蔵されているためADXL345なしで動作可能です。
-MPU6886を使うか使わないかはスケッチの**#define USE_MPU6886**で設定可能です。
+MPU6886を使うか使わないかはスケッチの**#define USE_INTERNAL_IMU**で設定可能です。
 M5AtomLiteはMPU6886がないため、falseに設定する必要があります。
 
 
