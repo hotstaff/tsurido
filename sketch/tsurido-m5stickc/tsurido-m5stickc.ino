@@ -416,7 +416,7 @@ void loop()
                         M5.Lcd.setCursor(M5.Lcd.width() / 2 - 8 * 4,
                                          M5.Lcd.height() / 2);
                         M5.Lcd.setTextColor(WHITE, BLACK);
-                        M5.Lcd.printf("%4d", scalar);
+                        M5.Lcd.printf("%5d", scalar);
                         M5.Lcd.setTextSize(1);
                 }
 
