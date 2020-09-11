@@ -351,7 +351,7 @@ void loop()
         long wait = 0;
 
         // get ADXL345 data
-        adxl.readXYZ(&x, &y, &z);
+        read_acc(&x, &y, &z);
         scalar = SCALAR(x, y, z);
 
         // get battery charge(%)
