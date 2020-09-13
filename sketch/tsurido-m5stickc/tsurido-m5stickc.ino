@@ -46,7 +46,6 @@
 #define BAUDRATE            115200 // Serial communication baud rate 
 #define CPU_FREQ            240    // Set FREQ MHz -> 240 or 160
                                    // (80, 40, 20, 10) is not work normally
-
 // warning
 #define WARN                true   // Enable warning LED
 #define BUFFER_SIZE         200    // Buffer size for statics

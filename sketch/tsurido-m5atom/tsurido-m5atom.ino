@@ -37,13 +37,14 @@
 #define DEVICE_NAME         "Tsurido"
 
 // device select
-#define USE_INTERNAL_IMU         false     // M5Atom Matrix Only
+#define USE_INTERNAL_IMU    true     // M5Atom Matrix Only
 
 // basic
 #define DELAY               50        // milliseconds
 #define SERIAL              true      // With/without serial communication
 #define BAUDRATE            115200    // Serial communication baud rate
-
+#define CPU_FREQ            160       // Set FREQ MHz -> 240 or 160
+                                      // (80, 40, 20, 10) is not work normally
 // warning
 #define WARN                true      // Enable warning LED
 #define BUFFER_SIZE         200       // Buffer size for statics
@@ -72,12 +73,20 @@ ADXL345 adxl;
 // FLAGS
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
+bool lowEnergyMode = false;
 
 // online algorism
 int K = 0;
 int n = 0;
 double Ex = 0;
 double Ex2 = 0;
+
+void changeCPUFreq(int freq)
+{
+        while(!setCpuFrequencyMhz(freq)) {
+        ;
+        }
+}
 
 void fillColor(CRGB color)
 {       
@@ -262,23 +271,39 @@ void loop()
         sprintf(msg, "Ax, Ay, Az, A: %d, %d, %d, %d", x, y, z, scalar);
 
 
-        if (scalar != 0) {
-                if (deviceConnected) {
-                        fillColor(color_bluetooh);
-                } else {
-                        fillColor(color_success);
-                }
-        } else {
-                fillColor(color_error);
-        }                 
-        
-        if (SERIAL)
-                Serial.println(msg);
+        if (M5.Btn.wasPressed()) {
 
-        if (WARN)
-                get_stat(&scalar, &mean, &standard);
-                diff = (int) abs(scalar - mean);
-                warn(&diff, &standard);
+                if (lowEnergyMode) {
+                        changeCPUFreq(CPU_FREQ);
+                        M5.dis.setBrightness(LED_BRIGHTNESS);
+                        lowEnergyMode = false;
+                } else {
+                        changeCPUFreq(80);
+                        M5.dis.setBrightness(0);
+                        lowEnergyMode = true;
+                }
+                
+        }
+
+        if (!lowEnergyMode) {
+                if (scalar != 0) {
+                        if (deviceConnected) {
+                                fillColor(color_bluetooh);
+                        } else {
+                                fillColor(color_success);
+                        }
+                } else {
+                        fillColor(color_error);
+                }                 
+
+                if (WARN)
+                        get_stat(&scalar, &mean, &standard);
+                        diff = (int) abs(scalar - mean);
+                        warn(&diff, &standard);
+
+                if (SERIAL)
+                        Serial.println(msg);
+        }
 
         if (deviceConnected) {
                 pCharacteristic->setValue(msg);
@@ -296,8 +321,9 @@ void loop()
                 oldDeviceConnected = deviceConnected;
         }
 
-        wait = DELAY * 1000 - (micros() - t);
+        M5.update();
 
+        wait = DELAY * 1000 - (micros() - t);
         if (wait > 0)
                 delayMicroseconds(wait);
 
