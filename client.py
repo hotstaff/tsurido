@@ -88,10 +88,28 @@ class SerialParser:
         return labels, values
 
 
+class SerialLogger:
+    def __init__(self, labels, write_interval=20):
+        self._logger_buff = [["count", "unixtime"] + labels]
+        self._logger_uid = datetime.now().strftime('%Y%m%d_%H%M%S')
+        self._write_interval = write_interval
+        self._count = 0
+
+    def write(self, data):
+        self._count += 1
+        self._logger_buff.append([self._count, time.time()] + data)
+
+        if len(self._logger_buff) > self._write_interval:
+            with open(f'{self._logger_uid}.csv', 'a') as f:
+                writer = csv.writer(f)
+                writer.writerows(self._logger_buff)
+                self._logger_buff.clear()
+
+
 class Plotter:
     """Tsurido Plotter module"""
     def __init__(self, interval=1, width=200, pause=0.001, sigma=(5, 10),
-                 angle=True, xlabel=False, ylabel=True, logger=False,
+                 angle=True, xlabel=False, ylabel=True, logging=False,
                  title="Tsurido Plotter"):
         # define
         self.__indexes = ("Ax", "Ay", "Az", "A")
@@ -103,16 +121,18 @@ class Plotter:
         self._width = width
         self._angle = angle
         self.sigma = sigma   # [warning, overrange]
-        self._logger = logger
+        self._logging = logging
 
         self.count = 0
         self.closed = False # plotter end flag
         self._last_ring = time.time() + 3
-        self._logger_uid = datetime.now().strftime('%Y%m%d_%H%M%S')
-        self._logger_buff = [["count", "unixtime"] + list(self.__indexes)]
 
         self.t = np.zeros(self._width)
         self.values = np.zeros((4, self._width))
+
+        # logger
+        if logging:
+            self._logger = SerialLogger(list(self.__indexes))
 
         # initial plot
         plt.ion()
@@ -161,15 +181,6 @@ class Plotter:
             phi = 0
 
         return theta, phi
-
-    def _write_log(self, row):
-        self._logger_buff.append([self.count] + [time.time()] + row)
-
-        if len(self._logger_buff) > 20:
-            with open(f'{self._logger_uid}.csv', 'a') as f:
-                writer = csv.writer(f)
-                writer.writerows(self._logger_buff)
-                self._logger_buff.clear()
 
     def _store_values(self, values):
         self.t[0:-1] = self.t[1:]
@@ -253,10 +264,9 @@ class Plotter:
         if self.count % self._interval == 0:
             self._plot(diff, std)
 
-        if self._logger:
-            self._write_log(values)
+        if self._logging:
+            self._logger.write(values)
 
-        # print('{0}'.format(data))
 
 def main():
     BLE.clear_cached_data()
@@ -380,7 +390,7 @@ if __name__ == '__main__':
     PLOTTER = Plotter(interval=ARGS.interval,
                       width=ARGS.width,
                       angle=ARGS.noangle,
-                      logger=ARGS.logging,
+                      logging=ARGS.logging,
                       sigma=ARGS.sigma if ARGS.sigma[1] > ARGS.sigma[0] else [5, 10],
                       title=f"Tsurido Plotter - {ARGS.DEVICE_NAME}")
     BLE.initialize()
