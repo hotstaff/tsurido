@@ -47,7 +47,9 @@
                                       // (80, 40, 20, 10) is not work normally
 // warning
 #define WARN                true      // Enable warning LED
-#define BUFFER_SIZE         200       // Buffer size for statics
+#define ONLINE_BUFFER_SIZE  200       // Buffer size for statisics
+                                      // (must be define before online.h)
+
 #define TH_WARN             5         // Warning threshold(sigma)
 
 // LED
@@ -60,6 +62,7 @@
 
 #define SCALAR(x, y, z)     sqrt(x*x + y*y + z*z)
 
+#include "online.h"
 
 CRGB color_error = CRGB(COLOR_NEON_RED);
 CRGB color_warning = CRGB(COLOR_NEON_YELLOW);
@@ -74,12 +77,6 @@ ADXL345 adxl;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 bool lowEnergyMode = false;
-
-// online algorism
-int K = 0;
-int n = 0;
-double Ex = 0;
-double Ex2 = 0;
 
 void changeCPUFreq(int freq)
 {
@@ -97,51 +94,6 @@ void fillColor(CRGB color)
                 }
                 lastcolor = color;
         }
-}
-
-void add_variable(int* x)
-{
-        if (n == 0)
-                K = *x;
-        n += 1;
-        Ex += *x - K;
-        Ex2 += (*x - K) * (*x - K);
-}
-
-void remove_variable(int* x)
-{
-        n -= 1;
-        Ex -= (*x - K);
-        Ex2 -= (*x - K) * (*x - K);
-}
-double get_mean(void)
-{
-        return K + Ex / n;
-}
-
-double get_variance(void)
-{
-        return (Ex2 - (Ex * Ex) / n) / n;
-}
-
-void get_stat(int* x, double* mean, double* std)
-{
-        static int pos = 0;
-        static int data[BUFFER_SIZE] = {};
-
-        if(pos == BUFFER_SIZE)
-                pos = 0;
-
-        if(n == BUFFER_SIZE)
-                remove_variable(&data[pos]);
-
-        data[pos] = *x;
-        add_variable(&data[pos]);
-
-        *mean = get_mean();
-        *std = sqrt(get_variance());
-
-        pos++;
 }
 
 bool warn(int* val, double* standard) {
@@ -297,7 +249,7 @@ void loop()
                 }                 
 
                 if (WARN)
-                        get_stat(&scalar, &mean, &standard);
+                        OL.get_stat(&scalar, &mean, &standard);
                         diff = (int) abs(scalar - mean);
                         warn(&diff, &standard);
 
