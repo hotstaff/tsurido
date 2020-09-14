@@ -48,7 +48,8 @@
                                    // (80, 40, 20, 10) is not work normally
 // warning
 #define WARN                true   // Enable warning LED
-#define BUFFER_SIZE         200    // Buffer size for statics
+#define ONLINE_BUFFER_SIZE  200    // Buffer size for statisics
+                                   // (must be define before online.h)
 
 // plot
 #define X0                  5      // Plot left padding
@@ -67,6 +68,7 @@
 #define SCALAR(x, y, z)     sqrt(x*x + y*y + z*z)
 #define BATT_CHARGE(v, low, full)     ((v - low) / (full - low) * 100)
 
+#include "online.h"
 
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
@@ -81,62 +83,11 @@ bool lowEnergyMode = false;
 // batt
 int batt_charge = 100;
 
-// online algorism
-int K = 0;
-int n = 0;
-double Ex = 0;
-double Ex2 = 0;
-
 void changeCPUFreq(int freq)
 {
         while(!setCpuFrequencyMhz(freq)) {
         ;
         }
-}
-
-void add_variable(int* x)
-{
-        if (n == 0)
-                K = *x;
-        n += 1;
-        Ex += *x - K;
-        Ex2 += (*x - K) * (*x - K);
-}
-
-void remove_variable(int* x)
-{
-        n -= 1;
-        Ex -= (*x - K);
-        Ex2 -= (*x - K) * (*x - K);
-}
-double get_mean(void)
-{
-        return K + Ex / n;
-}
-
-double get_variance(void)
-{
-        return (Ex2 - (Ex * Ex) / n) / n;
-}
-
-void get_stat(int* x, double* mean, double* std)
-{
-        static int pos = 0;
-        static int data[BUFFER_SIZE] = {};
-
-        if(pos == BUFFER_SIZE)
-                pos = 0;
-
-        if(n == BUFFER_SIZE)
-                remove_variable(&data[pos]);
-
-        data[pos] = *x;
-        add_variable(&data[pos]);
-
-        *mean = get_mean();
-        *std = sqrt(get_variance());
-
-        pos++;
 }
 
 void updateStateBLE()
@@ -235,7 +186,7 @@ void read_acc(int* x, int* y, int* z)
 void plot(int* val, double* standard)
 {
         static int i = 0;
-        static int diff[BUFFER_SIZE] = {};
+        static int diff[ONLINE_BUFFER_SIZE] = {};
 
         int sigma = 0;
         int y0 = 0;
@@ -401,7 +352,7 @@ void loop()
                 }
 
                 if ((WARN || plotEnabled)) {
-                        get_stat(&scalar, &mean, &standard);
+                        OL.get_stat(&scalar, &mean, &standard);
                         diff = (int) abs(scalar - mean);
                 }
 
