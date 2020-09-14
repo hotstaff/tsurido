@@ -49,9 +49,9 @@ M5Stick・M5Atomに内臓のIMUユニットMPU6886/SH200QもしくはGrove接続
 | ---- | ---- | :----: | :----: | :----: | :----: | :----: |
 | M5StickC単体 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | trueに設定 |
 | M5StickCとADXL345 | [tsurido-m5stickc.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5stickc) | ◯ | ◯ | ◯ | ◯ | falseに設定 |
-| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | trueに設定 |
-| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | falseに設定 |
-| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | × | × | falseに設定 |
+| M5AtomMatrix単体 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | ◯ | × | trueに設定 |
+| M5AtomMatrixとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | ◯ | × | falseに設定 |
+| M5AtomLiteとADXL345 | [tsurido-m5atom.ino](https://github.com/hotstaff/tsurido/tree/master/sketch/tsurido-m5atom) | × | ◯ | ◯ | × | falseに設定 |
 
 `#define USE_INTERNAL_IMU`を`true`に設定することで内蔵のIMUユニットを加速度センサーとして利用できます。
 
