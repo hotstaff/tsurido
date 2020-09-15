@@ -1,13 +1,13 @@
 /*****************************************************************************/
-//  Function:    Get the accelemeter of X/Y/Z axis and print out on the 
+//  Function:    Get the accelemeter of X/Y/Z axis and print out on the
 //                  serial monitor and bluetooth.
 //  Usage:       This program is for fishing. Use the accelerometer at the end
-//               of the rod to see if the fish is caught. Acceleration is 
-//               transmitted in real time via Bluetooth and can be monitored 
+//               of the rod to see if the fish is caught. Acceleration is
+//               transmitted in real time via Bluetooth and can be monitored
 //               from a laptop.
 //  Hardware:    M5StickC + ADXL345(Grove)
 //  Arduino IDE: Arduino-1.8.13
-//  Author:  Hideto Manjo     
+//  Author:  Hideto Manjo
 //  Date:    Aug 9, 2020
 //  Version: v0.2
 //
@@ -85,13 +85,13 @@ int batt_charge = 100;
 
 void changeCPUFreq(int freq)
 {
-        while(!setCpuFrequencyMhz(freq)) {
-        ;
+        while (!setCpuFrequencyMhz(freq)) {
+                ;
         }
 }
 
 void updateStateBLE()
-{   
+{
         if (!lowEnergyMode) {
                 if (deviceConnected) {
                         M5.Lcd.setCursor(M5.Lcd.width() - 22, OFFSET_MENU);
@@ -110,9 +110,9 @@ void updateStateBATT()
         if (!lowEnergyMode) {
                 M5.Lcd.setCursor(0, OFFSET_MENU);
                 if (batt_charge > 33) {
-                    M5.Lcd.setTextColor(WHITE, BLACK);
+                        M5.Lcd.setTextColor(WHITE, BLACK);
                 } else {
-                    M5.Lcd.setTextColor(RED, BLACK);
+                        M5.Lcd.setTextColor(RED, BLACK);
                 }
                 M5.Lcd.printf("%d%%", batt_charge);
         }
@@ -121,13 +121,13 @@ void updateStateBATT()
 class MyServerCallbacks: public BLEServerCallbacks
 {
         void onConnect(BLEServer* pServer)
-        {       
+        {
                 deviceConnected = true;
                 updateStateBLE();
         }
 
         void onDisconnect(BLEServer* pServer)
-        {       
+        {
                 deviceConnected = false;
                 updateStateBLE();
         }
@@ -139,12 +139,12 @@ void setup_acc()
                 M5.IMU.Init();
                 return;
         }
-        
+
         adxl.powerOn();
-}    
+}
 
 void setup_ble()
-{       
+{
         BLEDevice::init(DEVICE_NAME);
         BLEServer *pServer = BLEDevice::createServer();
         pServer->setCallbacks(new MyServerCallbacks());
@@ -152,11 +152,11 @@ void setup_ble()
         BLEService *pService = pServer->createService(SERVICE_UUID);
 
         pCharacteristic = pService->createCharacteristic(
-                CHARACTERISTIC_UUID,
-                BLECharacteristic::PROPERTY_READ |
-                BLECharacteristic::PROPERTY_WRITE |
-                BLECharacteristic::PROPERTY_NOTIFY |
-                BLECharacteristic::PROPERTY_INDICATE
+                                  CHARACTERISTIC_UUID,
+                                  BLECharacteristic::PROPERTY_READ |
+                                  BLECharacteristic::PROPERTY_WRITE |
+                                  BLECharacteristic::PROPERTY_NOTIFY |
+                                  BLECharacteristic::PROPERTY_INDICATE
                           );
         pCharacteristic->addDescriptor(new BLE2902());
 
@@ -170,7 +170,7 @@ void setup_ble()
 }
 
 void read_acc(int* x, int* y, int* z)
-{       
+{
         if (USE_INTERNAL_IMU) {
                 int16_t ax, ay, az;
                 M5.IMU.getAccelAdc(&ax, &ay, &az);
@@ -195,7 +195,7 @@ void plot(int* val, double* standard)
         int height = M5.Lcd.height() - 5;
         int width = M5.Lcd.width() - X0;
 
-        if(i == width)
+        if (i == width)
                 i = 0;
 
         diff[i] = *val;
@@ -224,16 +224,17 @@ void plot(int* val, double* standard)
         i++;
 }
 
-bool warn(int* val, double* standard) {
+bool warn(int* val, double* standard)
+{
         static long lastring = 0;
         static bool ring = false;
 
-        if (micros() - lastring > 2000 * 1000) { 
+        if (micros() - lastring > 2000 * 1000) {
                 if (*val > TH_WARN * (*standard)) {
                         lastring = micros();
                         ring = true;
-                }else{
-                        ring = false; 
+                } else {
+                        ring = false;
                 }
         }
 
@@ -248,15 +249,15 @@ bool warn(int* val, double* standard) {
 }
 
 int battery_charge()
-{       
+{
         double vbat = M5.Axp.GetVbatData() * 1.1 / 1000;
         int charge = BATT_CHARGE(vbat, BATT_LOW_VOLTAGE, BATT_FULL_VOLTAGE);
 
-        if(charge > 100) {
-              return 100;
+        if (charge > 100) {
+                return 100;
 
-        }else if(charge < 0) {
-              return 1;
+        } else if (charge < 0) {
+                return 1;
         }
 
         return charge;
@@ -284,7 +285,7 @@ void setup()
 }
 
 void loop()
-{       
+{
         // sensor
         int x = 0;
         int y = 0;
@@ -322,7 +323,7 @@ void loop()
                         digitalWrite(GPIO_NUM_10, HIGH);
                         lowEnergyMode = true;
                 }
-                
+
         }
 
         if (!lowEnergyMode) {
@@ -339,7 +340,7 @@ void loop()
                                 M5.Lcd.setCursor(M5.Lcd.width() / 2 - 32,
                                                  OFFSET_MAIN);
                                 M5.Lcd.printf("Tsuri");
-                                M5.Lcd.setCursor(M5.Lcd.width() / 2 - 32, 
+                                M5.Lcd.setCursor(M5.Lcd.width() / 2 - 32,
                                                  OFFSET_MAIN + 20);
                                 M5.Lcd.printf("  do");
                                 M5.Lcd.setTextSize(1);
@@ -361,7 +362,7 @@ void loop()
 
                 if (plotEnabled) {
                         plot(&diff, &standard);
-                }else{
+                } else {
                         M5.Lcd.setTextSize(2);
                         M5.Lcd.setCursor(M5.Lcd.width() / 2 - 8 * 4,
                                          M5.Lcd.height() / 2);

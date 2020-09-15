@@ -1,13 +1,13 @@
 /*****************************************************************************/
-//  Function:    Get the accelemeter of X/Y/Z axis and print out on the 
+//  Function:    Get the accelemeter of X/Y/Z axis and print out on the
 //                  serial monitor and bluetooth.
 //  Usage:       This program is for fishing. Use the accelerometer at the end
-//               of the rod to see if the fish is caught. Acceleration is 
-//               transmitted in real time via Bluetooth and can be monitored 
+//               of the rod to see if the fish is caught. Acceleration is
+//               transmitted in real time via Bluetooth and can be monitored
 //               from a laptop.
 //  Hardware:    M5Atom + ADXL345(Grove)
 //  Arduino IDE: Arduino-1.8.13
-//  Author:  Hideto Manjo     
+//  Author:  Hideto Manjo
 //  Date:    Aug 9, 2020
 //  Version: v0.2
 //
@@ -37,7 +37,7 @@
 #define DEVICE_NAME         "Tsurido"
 
 // device select
-#define USE_INTERNAL_IMU    true     // M5Atom Matrix Only
+#define USE_INTERNAL_IMU    true      // M5Atom Matrix Only
 
 // basic
 #define DELAY               50        // milliseconds
@@ -80,33 +80,34 @@ bool lowEnergyMode = false;
 
 void changeCPUFreq(int freq)
 {
-        while(!setCpuFrequencyMhz(freq)) {
-        ;
+        while (!setCpuFrequencyMhz(freq)) {
+                ;
         }
 }
 
 void fillColor(CRGB color)
-{       
+{
         static CRGB lastcolor = CRGB(0xFFFFFF);
         if (color != lastcolor) {
-                for(int i = 0; i < 25; i++){
+                for (int i = 0; i < 25; i++) {
                         M5.dis.drawpix(i, color);
                 }
                 lastcolor = color;
         }
 }
 
-bool warn(int* val, double* standard) {
+bool warn(int* val, double* standard)
+{
         static long lastring = 0;
         static bool ring = false;
         static bool state = false;
 
-        if (micros() - lastring > 2000 * 1000) { 
+        if (micros() - lastring > 2000 * 1000) {
                 if (*val > TH_WARN * (*standard)) {
                         lastring = micros();
                         ring = true;
-                }else{
-                        ring = false; 
+                } else {
+                        ring = false;
                 }
         }
 
@@ -119,7 +120,7 @@ bool warn(int* val, double* standard) {
                 state = !state;
                 return true;
         }
-        
+
         M5.dis.setBrightness(LED_BRIGHTNESS);
 
         return false;
@@ -145,12 +146,12 @@ void setup_acc()
                 M5.IMU.Init();
                 return;
         }
-        
+
         adxl.powerOn();
-}    
+}
 
 void setup_ble()
-{       
+{
         BLEDevice::init(DEVICE_NAME);
         BLEServer *pServer = BLEDevice::createServer();
         pServer->setCallbacks(new MyServerCallbacks());
@@ -158,11 +159,11 @@ void setup_ble()
         BLEService *pService = pServer->createService(SERVICE_UUID);
 
         pCharacteristic = pService->createCharacteristic(
-                CHARACTERISTIC_UUID,
-                BLECharacteristic::PROPERTY_READ |
-                BLECharacteristic::PROPERTY_WRITE |
-                BLECharacteristic::PROPERTY_NOTIFY |
-                BLECharacteristic::PROPERTY_INDICATE
+                                  CHARACTERISTIC_UUID,
+                                  BLECharacteristic::PROPERTY_READ |
+                                  BLECharacteristic::PROPERTY_WRITE |
+                                  BLECharacteristic::PROPERTY_NOTIFY |
+                                  BLECharacteristic::PROPERTY_INDICATE
                           );
         pCharacteristic->addDescriptor(new BLE2902());
 
@@ -176,7 +177,7 @@ void setup_ble()
 }
 
 void read_acc(int* x, int* y, int* z)
-{       
+{
         if (USE_INTERNAL_IMU) {
                 int16_t ax, ay, az;
                 M5.IMU.getAccelAdc(&ax, &ay, &az);
@@ -234,7 +235,7 @@ void loop()
                         M5.dis.setBrightness(0);
                         lowEnergyMode = true;
                 }
-                
+
         }
 
         if (!lowEnergyMode) {
@@ -246,12 +247,12 @@ void loop()
                         }
                 } else {
                         fillColor(color_error);
-                }                 
+                }
 
                 if (WARN)
                         OL.get_stat(&scalar, &mean, &standard);
-                        diff = (int) abs(scalar - mean);
-                        warn(&diff, &standard);
+                diff = (int) abs(scalar - mean);
+                warn(&diff, &standard);
 
                 if (SERIAL)
                         Serial.println(msg);
