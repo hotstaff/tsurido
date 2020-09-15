@@ -363,11 +363,11 @@ def parser():
                            default=[5, 10],
                            nargs=2,
                            metavar=('warn', 'over range'),
-                           help='specify warn/OR range')
+                           help='Specify warn/OR range')
 
     argparser.add_argument('-na', '--noangle',
                            action='store_false',
-                           help='No angle plot')
+                           help='Disable rod angle plot')
 
     argparser.add_argument('--logging',
                            action='store_true',
