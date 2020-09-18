@@ -90,7 +90,7 @@ Adafruit_BluefruitLEは公式リポジトリ版は最新のBluezに対応でき�
 パッチ適用済み Adafruit Python BluefruitLE ライブラリのインストール
 
 ```bash
-git clone　https://github.com/donatieng/Adafruit_Python_BluefruitLE
+git clone https://github.com/donatieng/Adafruit_Python_BluefruitLE
 cd Adafruit_Python_BluefruitLE
 sudo python3 setup.py install
 ```
