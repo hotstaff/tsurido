@@ -9,7 +9,7 @@
 //  Arduino IDE: Arduino-1.8.13
 //  Author:  Hideto Manjo
 //  Date:    Aug 9, 2020
-//  Version: v0.2
+//  Version: v0.3
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -224,13 +224,13 @@ void plot(int* val, double* standard)
         i++;
 }
 
-bool warn(int* val, double* standard)
+bool warn(double* outlier)
 {
         static long lastring = 0;
         static bool ring = false;
 
         if (micros() - lastring > 2000 * 1000) {
-                if (*val > TH_WARN * (*standard)) {
+                if (*outlier > TH_WARN) {
                         lastring = micros();
                         ring = true;
                 } else {
@@ -295,6 +295,7 @@ void loop()
 
         // plot
         int diff = 0;
+        double outlier = 0.0;
         double mean = 0.0;
         double standard = 0.0;
 
@@ -305,11 +306,15 @@ void loop()
         read_acc(&x, &y, &z);
         scalar = SCALAR(x, y, z);
 
+        OL.get_stat(&scalar, &mean, &standard);
+        diff = (int) abs(scalar - mean);
+        outlier = diff / standard;
+
         // get battery charge(%)
         batt_charge = battery_charge();
         updateStateBATT();
 
-        sprintf(msg, "Ax, Ay, Az, A: %d, %d, %d, %d", x, y, z, scalar);
+        sprintf(msg, "Ax,Ay,Az,A,O:%d,%d,%d,%d,%.2lf", x, y, z, scalar, outlier);
 
         if (M5.BtnB.wasPressed()) {
 
@@ -352,13 +357,8 @@ void loop()
                         }
                 }
 
-                if ((WARN || plotEnabled)) {
-                        OL.get_stat(&scalar, &mean, &standard);
-                        diff = (int) abs(scalar - mean);
-                }
-
                 if (WARN)
-                        warn(&diff, &standard);
+                        warn(&outlier);
 
                 if (plotEnabled) {
                         plot(&diff, &standard);

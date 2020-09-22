@@ -9,7 +9,7 @@
 //  Arduino IDE: Arduino-1.8.13
 //  Author:  Hideto Manjo
 //  Date:    Aug 9, 2020
-//  Version: v0.2
+//  Version: v0.3
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -96,14 +96,14 @@ void fillColor(CRGB color)
         }
 }
 
-bool warn(int* val, double* standard)
+bool warn(double* outlier)
 {
         static long lastring = 0;
         static bool ring = false;
         static bool state = false;
 
         if (micros() - lastring > 2000 * 1000) {
-                if (*val > TH_WARN * (*standard)) {
+                if (*outlier > TH_WARN) {
                         lastring = micros();
                         ring = true;
                 } else {
@@ -210,22 +210,25 @@ void loop()
         int scalar = 0;
         char msg[128];
 
-        int diff = 0;
         double mean = 0.0;
         double standard = 0.0;
+        double outlier = 0.0;
 
         long wait;
         long t = micros();
 
 
         read_acc(&x, &y, &z);
-
         scalar = SCALAR(x, y, z);
-        sprintf(msg, "Ax, Ay, Az, A: %d, %d, %d, %d", x, y, z, scalar);
+
+        OL.get_stat(&scalar, &mean, &standard);
+        outlier = abs(scalar - mean) / standard;
+
+        sprintf(msg, "Ax,Ay,Az,A,O:%d,%d,%d,%d,%.2lf",
+                x, y, z, scalar, outlier);
 
 
         if (M5.Btn.wasPressed()) {
-
                 if (lowEnergyMode) {
                         changeCPUFreq(CPU_FREQ);
                         M5.dis.setBrightness(LED_BRIGHTNESS);
@@ -250,9 +253,7 @@ void loop()
                 }
 
                 if (WARN)
-                        OL.get_stat(&scalar, &mean, &standard);
-                diff = (int) abs(scalar - mean);
-                warn(&diff, &standard);
+                        warn(&outlier);
 
                 if (SERIAL)
                         Serial.println(msg);
