@@ -1,3 +1,12 @@
+"""Online 
+This is a module of sequential calculation algorithm
+for finding moving average, moving standard deviation
+and moving variance in constraints.
+
+    Author:  Hideto Manjo
+    Date:    Aug 9, 2020
+"""
+
 import time
 import random
 import numpy as np
@@ -31,7 +40,7 @@ class Online:
 
 
 if __name__ == '__main__':
-
+    # The main function is for calculation validation.
     TOTAL_NUM = 100
     cnt = 0
     data = [0] * TOTAL_NUM
