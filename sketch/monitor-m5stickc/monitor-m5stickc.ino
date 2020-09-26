@@ -33,7 +33,8 @@
 
 // menu offsets
 #define OFFSET_MENU         2      // Menu
-#define OFFSET_MAIN         12     // Main
+#define OFFSET_MAIN         15     // Main
+#define OFFSET_FOOT         70     // Footer
 
 
 static BLEUUID serviceUUID(SERVICE_UUID);
@@ -47,14 +48,9 @@ static bool doConnect = false;
 static bool connected = false;
 static bool doScan = true;
 
+static int alart = 0;
 
-// this is m5stack function
-static void progressBar(int x, int y, int w, int h, uint8_t val) {
-        canvas.drawRect(x, y, w, h, 0x09F1);
-        canvas.fillRect(x + 1, y + 1, w * (((float)val) / 100.0), h - 1, 0x09F1);
-}
-
-static int split(char* str, char* demilitor, String* out, int outlen)
+static int split(char* str, char* demilitor, String* out, const int outlen)
 {
         char *ptr;
         int i = 1;
@@ -77,7 +73,7 @@ static int split(char* str, char* demilitor, String* out, int outlen)
         return i;
 }
 
-static int parse(char* msg, String* labels, String* values, int length)
+static int parse(char* msg, String* labels, String* values, const int length)
 {
         int labels_len = 0;
         int values_len = 0;
@@ -100,24 +96,42 @@ static int parse(char* msg, String* labels, String* values, int length)
         return labels_len;
 }
 
-static long scalor(String* labels, String* values, int size)
+static int find_label(String* labels, String label, int guess, const int size)
 {
+        // fast path
+        if (guess > -1 && labels[guess].equals(label))
+                return guess;
+
         for (int i = 0; i < size; i++) {
-                if (labels[i].equals("A")) {
-                        return values[i].toInt();
-                }
+                if (labels[i].equals(label))
+                        return i;
         }
-        return 0;
+
+        // not found
+        return -1;
 }
 
-static double outlier(String* labels, String* values, int size)
+
+static long scalor(String* labels, String* values, const int size)
+{       
+        static int idx = 0;
+        
+        idx = find_label(labels, "A", idx, size);
+        if (idx < 0)
+                return 0;
+
+        return values[idx].toInt();
+}
+
+static double outlier(String* labels, String* values, const int size)
 {
-        for (int i = 0; i < size; i++) {
-                if (labels[i].equals("O")) {
-                        return values[i].toDouble();
-                }
-        }
-        return 0;
+        static int idx = 0;
+
+        idx = find_label(labels, "O", idx, size);
+        if (idx < 0)
+                return 0;
+
+        return values[idx].toDouble();
 }
 
 bool warn(double* outlier)
@@ -127,6 +141,7 @@ bool warn(double* outlier)
 
         if (micros() - lastring > 2000 * 1000) {
                 if (*outlier > 5) {
+                        alart += 1;
                         lastring = micros();
                         ring = true;
                 } else {
@@ -158,7 +173,7 @@ static void updateStateBLE()
                 canvas.println(DEVICE_NAME);
         } else {
                 canvas.setTextSize(2);
-                canvas.setCursor(15, 40);
+                canvas.setCursor(15, 33);
                 canvas.setTextColor(GREENYELLOW, BLACK);
                 canvas.println("Scanning...");
                 canvas.setTextSize(1);
@@ -169,13 +184,26 @@ static void updateStateBLE()
         }
 }
 
+// this is m5stack function
+static void progressBar(int x, int y, int w, int h, uint8_t val) {
+        canvas.drawRect(x, y, w, h, 0x09F1);
+        canvas.fillRect(x + 1, y + 1, w * (((float)val) / 100.0), h - 1, 0x09F1);
+}
+
 static void updateBar(double* val)
 {
         int outlier_pc = *val * 100 / 5.0;
         if (outlier_pc > 100)
                 outlier_pc = 100;
-        canvas.fillRect(5, 15, 150, 60, 0);
-        progressBar(5, 15, 150, 60, (uint8_t) outlier_pc);
+        canvas.fillRect(5, OFFSET_MAIN, 150, 50, 0);
+        progressBar(5, OFFSET_MAIN, 150, 50, (uint8_t) outlier_pc);
+}
+
+static void updateFoot()
+{
+        canvas.setCursor(M5.Lcd.width() - 70, OFFSET_FOOT);
+        canvas.setTextColor(ORANGE, BLACK);
+        canvas.printf("Atari %05d", alart);
 }
 
 static void drawCanvas(double* val)
@@ -183,6 +211,7 @@ static void drawCanvas(double* val)
         M5.Lcd.startWrite();
         updateBar(val);
         updateStateBLE();
+        updateFoot();
         canvas.pushSprite(0, 0);
         M5.Lcd.endWrite();
 }
